@@ -8,7 +8,7 @@ static const char* ROOM_NAMES[6] = {
   "bedroom", "bathroom", "garden"
 };
 
-static Adafruit_PN532 nfc(I2C_SDA, I2C_SCL);
+static Adafruit_PN532 nfc(NFC_IRQ, NFC_RESET);
 
 void NfcGrid::begin() {
   Wire.begin(I2C_SDA, I2C_SCL);

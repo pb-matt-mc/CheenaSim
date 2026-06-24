@@ -22,6 +22,10 @@
 // TCA9548A I2C address (default A0–A2 tied low = 0x70)
 #define MUX_ADDR      0x70
 
+// PN532 IRQ and RESET — must be separate from I2C bus (not GPIO21/22)
+#define NFC_IRQ    27
+#define NFC_RESET  26
+
 // NFC scan interval ms
 #define NFC_INTERVAL  200
 

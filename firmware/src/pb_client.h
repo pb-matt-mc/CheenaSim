@@ -9,7 +9,12 @@ public:
 
 private:
   String _baseUrl;
+  String _host;
+  int    _port = 443;
+  String _email;
+  String _password;
   String _token;
+  bool   _reauth();
   bool   _post(const String& path, const String& body, String& response);
   bool   _patch(const String& path, const String& body, String& response);
   bool   _get(const String& path, String& response);
