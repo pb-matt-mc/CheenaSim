@@ -4,8 +4,8 @@ import { HomeScene } from './scenes/HomeScene';
 
 new Phaser.Game({
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
+  width: 960,
+  height: 640,
   backgroundColor: '#1a1a2e',
   scene: [BootScene, HomeScene],
   parent: document.body,

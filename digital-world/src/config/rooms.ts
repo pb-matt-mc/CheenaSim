@@ -1,12 +1,14 @@
 export type RoomName = 'living_room' | 'kitchen' | 'study' | 'bedroom' | 'bathroom' | 'garden';
 
+// (x,y) = sim standing position + click-zone center; (w,h) = click-zone size.
+// Calibrated against the 960×640 house.png pixel-art background.
 export const ROOMS: Record<RoomName, { x: number; y: number; w: number; h: number }> = {
-  living_room: { x: 140, y: 160, w: 180, h: 180 },
-  kitchen:     { x: 400, y: 160, w: 180, h: 180 },
-  study:       { x: 660, y: 160, w: 180, h: 180 },
-  bedroom:     { x: 140, y: 420, w: 180, h: 180 },
-  bathroom:    { x: 400, y: 420, w: 180, h: 180 },
-  garden:      { x: 660, y: 420, w: 180, h: 180 },
+  bedroom:     { x: 225, y: 200, w: 175, h: 155 }, // top-left  — purple rug
+  bathroom:    { x: 460, y: 195, w: 175, h: 155 }, // top-center — teal tiles
+  kitchen:     { x: 695, y: 200, w: 175, h: 155 }, // top-right  — warm dining
+  living_room: { x: 225, y: 375, w: 175, h: 135 }, // bot-left   — red sofa
+  garden:      { x: 460, y: 375, w: 175, h: 135 }, // bot-center — hallway/entry
+  study:       { x: 695, y: 375, w: 175, h: 135 }, // bot-right  — blue desk
 };
 
 export const ROOM_NAMES = Object.keys(ROOMS) as RoomName[];
