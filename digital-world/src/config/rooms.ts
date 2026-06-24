@@ -2,13 +2,13 @@ export type RoomName = 'living_room' | 'kitchen' | 'study' | 'bedroom' | 'bathro
 
 // (x,y) = sim standing position + click-zone center; (w,h) = click-zone size.
 // Calibrated against the 960×640 house.png pixel-art background.
-export const ROOMS: Record<RoomName, { x: number; y: number; w: number; h: number }> = {
-  bedroom:     { x: 225, y: 200, w: 175, h: 155 }, // top-left  — purple rug
-  bathroom:    { x: 460, y: 195, w: 175, h: 155 }, // top-center — teal tiles
-  kitchen:     { x: 695, y: 200, w: 175, h: 155 }, // top-right  — warm dining
-  living_room: { x: 225, y: 375, w: 175, h: 135 }, // bot-left   — red sofa
-  garden:      { x: 460, y: 375, w: 175, h: 135 }, // bot-center — hallway/entry
-  study:       { x: 695, y: 375, w: 175, h: 135 }, // bot-right  — blue desk
+export const ROOMS: Record<RoomName, { x: number; y: number; w: number; h: number; bgKey: string }> = {
+  bedroom:     { x: 225, y: 200, w: 175, h: 155, bgKey: 'rooms/bedroom-bg' },
+  bathroom:    { x: 460, y: 195, w: 175, h: 155, bgKey: 'rooms/bathroom-bg' },
+  kitchen:     { x: 695, y: 200, w: 175, h: 155, bgKey: 'rooms/kitchen-bg' },
+  living_room: { x: 225, y: 375, w: 175, h: 135, bgKey: 'rooms/living-room-bg' },
+  garden:      { x: 460, y: 375, w: 175, h: 135, bgKey: 'rooms/garden-bg' },
+  study:       { x: 695, y: 375, w: 175, h: 135, bgKey: 'rooms/study-bg' },
 };
 
 export const ROOM_NAMES = Object.keys(ROOMS) as RoomName[];
