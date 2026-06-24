@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import type { HouseRoom } from '../../config/rooms';
+import PocketBaseService from '../../services/PocketBaseService';
 
 export class MagazineMayhemScene extends Phaser.Scene {
   private score = 0;
@@ -7,8 +9,13 @@ export class MagazineMayhemScene extends Phaser.Scene {
   private timerText!: Phaser.GameObjects.Text;
   private magazines: Phaser.GameObjects.Text[] = [];
   private countdownTimer!: Phaser.Time.TimerEvent;
+  private returnRoom: HouseRoom = 'living_room';
 
   constructor() { super({ key: 'MagazineMayhemScene' }); }
+
+  init(data: { returnRoom?: HouseRoom }): void {
+    this.returnRoom = data?.returnRoom ?? 'living_room';
+  }
 
   create(): void {
     this.score = 0;
@@ -105,7 +112,8 @@ export class MagazineMayhemScene extends Phaser.Scene {
     backBtn.on('pointerover', () => backBtn.setColor('#8B7FF7'));
     backBtn.on('pointerout',  () => backBtn.setColor('#2DD4BF'));
     backBtn.on('pointerdown', () => {
-      document.dispatchEvent(new CustomEvent('cheena:stop-activity'));
+      PocketBaseService.clearActivity();
+      this.scene.start('RoomScene', { room: this.returnRoom });
     });
   }
 }

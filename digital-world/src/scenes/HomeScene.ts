@@ -2,76 +2,105 @@ import Phaser from 'phaser';
 import PocketBaseService from '../services/PocketBaseService';
 import { Sim } from '../entities/Sim';
 import { ROOMS, roomAtPointer, type LocationName, type HouseRoom } from '../config/rooms';
-import { ROOM_ENTER_ANIMS, WORK_DRIVING_ANIM } from '../config/room-enter-anims';
+import { WORK_DRIVING_ANIM } from '../config/room-enter-anims';
 import { ACTIVITIES } from '../config/activities';
 import { AnimationPlayer } from '../systems/AnimationPlayer';
 import { ActivitySystem } from '../systems/ActivitySystem';
-import { PoiOverlay } from '../ui/PoiOverlay';
 
 export class HomeScene extends Phaser.Scene {
   private mySim!: Sim;
   private partnerSim!: Sim;
-  private myAnimPlayer!: AnimationPlayer;
   private partnerAnimPlayer!: AnimationPlayer;
   private activitySystem!: ActivitySystem;
-  private poiOverlay!: PoiOverlay;
+  private _currentRoom: HouseRoom = 'living_room';
+  private _navigating = false;
 
-  constructor() {
-    super({ key: 'HomeScene' });
-  }
+  constructor() { super({ key: 'HomeScene' }); }
 
   async create(): Promise<void> {
+    this.cameras.main.fadeIn(250, 0, 0, 0);
     this.add.image(0, 0, 'house').setOrigin(0);
 
     const start = ROOMS.living_room;
-    this.mySim      = new Sim(this, start.x, start.y, 'sim-violet', 'You');
-    this.partnerSim = new Sim(this, start.x, start.y, 'sim-cyan',   'Partner');
+    this.mySim      = new Sim(this, start.p1.x, start.p1.y, 'sim-violet', 'You');
+    this.partnerSim = new Sim(this, start.p2.x, start.p2.y, 'sim-cyan',   'Partner');
 
-    this.myAnimPlayer      = new AnimationPlayer(this, this.mySim);
     this.partnerAnimPlayer = new AnimationPlayer(this, this.partnerSim);
-
-    const container = this.game.canvas.parentElement ?? document.body;
-    this.poiOverlay     = new PoiOverlay(container);
-    this.activitySystem = new ActivitySystem(this, this.poiOverlay);
+    this.activitySystem    = new ActivitySystem(this);
 
     const initial = await PocketBaseService.loadInitialPositions();
 
-    // Place my sim
-    const myRoom = initial.myRoom;
-    if (PocketBaseService.isHouseRoom(myRoom)) {
-      this.mySim.setPosition(ROOMS[myRoom].x, ROOMS[myRoom].y);
-      this.myAnimPlayer.play(ROOM_ENTER_ANIMS[myRoom]);
-    } else {
-      // 'work' — hide from house view
-      this.mySim.setVisible(false);
-    }
+    const myRoom = PocketBaseService.isHouseRoom(initial.myRoom)
+      ? initial.myRoom : 'garden' as HouseRoom;
+    this._currentRoom = myRoom;
 
-    // Place partner sim
-    this._applyPartnerState(
-      initial.partnerRoom,
-      initial.partnerActivity,
-      initial.partnerActivityState,
-    );
+    const partnerRoom = initial.partnerRoom;
 
-    // Show poi overlay for current room
-    if (PocketBaseService.isHouseRoom(myRoom)) {
-      this.poiOverlay.showForRoom(myRoom);
-    }
+    // My sim: at p1 unless partner is also there (then use offset naturally via p1/p2 distinction)
+    this.mySim.setPosition(ROOMS[myRoom].p1.x, ROOMS[myRoom].p1.y);
+    this.mySim.playAnim('idle');
+
+    if (!PocketBaseService.isHouseRoom(initial.myRoom)) this.mySim.setVisible(false);
+
+    this._applyPartnerState(partnerRoom, initial.partnerActivity, initial.partnerActivityState);
 
     await PocketBaseService.subscribeToPartner((payload) => {
       this._applyPartnerState(payload.room, payload.activity, payload.activity_state);
     });
 
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      if (this._navigating) return;
       const room = roomAtPointer(p.x, p.y);
       if (!room) return;
 
-      const loc: LocationName = room;
-      this.myAnimPlayer.play(ROOM_ENTER_ANIMS[room as HouseRoom]);
-      this.poiOverlay.showForRoom(room as HouseRoom);
-      PocketBaseService.publishPosition(loc, 'digital');
-      this.activitySystem.onRoomChange(loc);
+      PocketBaseService.publishPosition(room, 'digital');
+      this._navigateToRoom(room);
     });
+  }
+
+  /** Walk sim through the corridor, then fade into RoomScene */
+  private _navigateToRoom(target: HouseRoom): void {
+    this._navigating = true;
+    const from = ROOMS[this._currentRoom];
+    const to   = ROOMS[target];
+
+    // Build waypoints: exit current door → cross corridor to target door → enter room
+    const waypoints: { x: number; y: number }[] = [];
+
+    // Only add corridor points if we're actually changing rooms
+    if (target !== this._currentRoom) {
+      waypoints.push(from.door);
+      // Cross corridor to target column (horizontal leg)
+      if (from.door.x !== to.door.x) waypoints.push({ x: to.door.x, y: from.door.y });
+      waypoints.push(to.door);
+    }
+    waypoints.push(to.p1);
+
+    this._walkPath(this.mySim, waypoints, () => {
+      this._currentRoom = target;
+      this._navigating = false;
+      this.cameras.main.fadeOut(250, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        this.scene.start('RoomScene', { room: target });
+      });
+    });
+  }
+
+  /** Chain walkTo calls through a list of waypoints, firing onDone after the last */
+  private _walkPath(
+    sim: Sim,
+    waypoints: { x: number; y: number }[],
+    onDone?: () => void,
+  ): void {
+    const [first, ...rest] = waypoints;
+    if (!first) { onDone?.(); return; }
+    const isLast = rest.length === 0;
+    sim.walkTo(
+      first.x, first.y,
+      /* skipIdleOnComplete */ !isLast,
+      /* duration */ 550,
+      isLast ? onDone : () => this._walkPath(sim, rest, onDone),
+    );
   }
 
   private _applyPartnerState(
@@ -84,7 +113,6 @@ export class HomeScene extends Phaser.Scene {
         this.partnerSim.setVisible(true);
         this.partnerAnimPlayer.play(WORK_DRIVING_ANIM);
       } else {
-        // at_work — hide from house
         this.partnerSim.setVisible(false);
         this.partnerAnimPlayer.stop();
       }
@@ -92,17 +120,22 @@ export class HomeScene extends Phaser.Scene {
     }
 
     this.partnerSim.setVisible(true);
+    const rd = ROOMS[room as HouseRoom];
+
+    // Use p2 position if partner is in same room as me, else p1
+    const pos = (room as HouseRoom) === this._currentRoom ? rd.p2 : rd.p1;
+    this.partnerSim.setPosition(pos.x, pos.y);
 
     if (activity && ACTIVITIES[activity]) {
       this.partnerAnimPlayer.play(ACTIVITIES[activity].partnerAnim);
     } else {
-      this.partnerAnimPlayer.play(ROOM_ENTER_ANIMS[room as HouseRoom]);
+      this.partnerSim.playAnim('idle');
+      this.partnerAnimPlayer.stop();
     }
   }
 
   shutdown(): void {
     this.activitySystem.destroy();
-    this.poiOverlay.hide();
     PocketBaseService.unsubscribeAll();
   }
 }
