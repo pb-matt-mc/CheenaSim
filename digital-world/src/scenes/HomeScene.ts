@@ -13,6 +13,7 @@ export class HomeScene extends Phaser.Scene {
   private partnerAnimPlayer!: AnimationPlayer;
   private activitySystem!: ActivitySystem;
   private _currentRoom: HouseRoom = 'living_room';
+  private _partnerRoom: LocationName = 'living_room';
   private _navigating = false;
 
   constructor() { super({ key: 'HomeScene' }); }
@@ -75,7 +76,7 @@ export class HomeScene extends Phaser.Scene {
     this._navigating = false;
     this.cameras.main.fadeOut(250, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      this.scene.start('RoomScene', { room, playerRoom: this._currentRoom });
+      this.scene.start('RoomScene', { room, playerRoom: this._currentRoom, partnerRoom: this._partnerRoom });
     });
   }
 
@@ -121,6 +122,7 @@ export class HomeScene extends Phaser.Scene {
     activity: string | null,
     activityState: string | null,
   ): void {
+    this._partnerRoom = room;
     if (room === 'work') {
       if (activityState === 'driving') {
         this.partnerSim.setVisible(true);

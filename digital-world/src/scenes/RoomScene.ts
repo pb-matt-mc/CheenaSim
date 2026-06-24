@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { Sim } from '../entities/Sim';
-import { ROOMS, type HouseRoom } from '../config/rooms';
+import { ROOMS, type HouseRoom, type LocationName } from '../config/rooms';
 import { ROOM_POIS } from '../config/room-pois';
 import { ACTIVITIES } from '../config/activities';
 import PocketBaseService from '../services/PocketBaseService';
@@ -8,6 +8,7 @@ import PocketBaseService from '../services/PocketBaseService';
 export class RoomScene extends Phaser.Scene {
   private room!: HouseRoom;
   private playerRoom!: HouseRoom;
+  private partnerRoom: LocationName = 'living_room';
   private mySim: Sim | null = null;
   private wasd!: {
     W: Phaser.Input.Keyboard.Key;
@@ -19,9 +20,10 @@ export class RoomScene extends Phaser.Scene {
 
   constructor() { super({ key: 'RoomScene' }); }
 
-  init(data: { room: HouseRoom; playerRoom: HouseRoom }): void {
-    this.room       = data.room;
-    this.playerRoom = data.playerRoom ?? data.room;
+  init(data: { room: HouseRoom; playerRoom: HouseRoom; partnerRoom?: LocationName }): void {
+    this.room        = data.room;
+    this.playerRoom  = data.playerRoom ?? data.room;
+    this.partnerRoom = data.partnerRoom ?? 'living_room';
   }
 
   create(): void {
@@ -30,10 +32,11 @@ export class RoomScene extends Phaser.Scene {
     const rd = ROOMS[this.room];
     this.add.image(0, 0, rd.bgKey).setOrigin(0);
 
-    const inRoom = this.room === this.playerRoom;
+    const inRoom        = this.room === this.playerRoom;
+    const partnerInRoom = this.partnerRoom === this.room;
 
     if (inRoom) {
-      // Sim enters from doorway, walks to default furniture position
+      // Player sim enters from doorway, walks to p1
       this.mySim = new Sim(this, rd.sceneEntry.x, rd.sceneEntry.y, 'sim-violet', 'You');
       this.mySim.setScale(2.5);
       this.mySim.walkTo(rd.sceneP1.x, rd.sceneP1.y, false, 900);
@@ -42,6 +45,14 @@ export class RoomScene extends Phaser.Scene {
       this.add.text(480, 22, `Viewing: ${this.room.replace('_', ' ')}`, {
         fontSize: '13px', color: '#5C6B85', fontFamily: 'ui-monospace, monospace',
       }).setOrigin(0.5).setDepth(10);
+    }
+
+    if (partnerInRoom) {
+      // Partner is already in this room — place them at p2 if player is also here, else p1
+      const partnerPos = inRoom ? rd.sceneP2 : rd.sceneP1;
+      const partnerSim = new Sim(this, partnerPos.x, partnerPos.y, 'sim-cyan', 'Partner');
+      partnerSim.setScale(2.5);
+      partnerSim.playAnim('idle');
     }
 
     this._buildPoiCards(inRoom);
@@ -149,7 +160,7 @@ export class RoomScene extends Phaser.Scene {
       bg.on('pointerdown', () => {
         this.game.canvas.style.cursor = '';
         PocketBaseService.publishActivity(activityId, null);
-        this.scene.start(ACTIVITIES[activityId].selfSceneKey, { returnRoom: this.room, playerRoom: this.playerRoom });
+        this.scene.start(ACTIVITIES[activityId].selfSceneKey, { returnRoom: this.room, playerRoom: this.playerRoom, partnerRoom: this.partnerRoom });
       });
     } else {
       // Dim the card and show a hint

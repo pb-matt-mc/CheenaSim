@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { HouseRoom } from '../../config/rooms';
+import type { HouseRoom, LocationName } from '../../config/rooms';
 import PocketBaseService from '../../services/PocketBaseService';
 
 export class MagazineMayhemScene extends Phaser.Scene {
@@ -9,17 +9,19 @@ export class MagazineMayhemScene extends Phaser.Scene {
   private timerText!: Phaser.GameObjects.Text;
   private magazines: Phaser.GameObjects.Text[] = [];
   private countdownTimer!: Phaser.Time.TimerEvent;
-  private returnRoom: HouseRoom = 'living_room';
-  private playerRoom: HouseRoom = 'living_room';
+  private returnRoom: HouseRoom   = 'living_room';
+  private playerRoom: HouseRoom   = 'living_room';
+  private partnerRoom: LocationName = 'living_room';
 
   private paused = false;
   private pauseOverlay: Phaser.GameObjects.GameObject[] = [];
 
   constructor() { super({ key: 'MagazineMayhemScene' }); }
 
-  init(data: { returnRoom?: HouseRoom; playerRoom?: HouseRoom }): void {
-    this.returnRoom = data?.returnRoom ?? 'living_room';
-    this.playerRoom = data?.playerRoom ?? this.returnRoom;
+  init(data: { returnRoom?: HouseRoom; playerRoom?: HouseRoom; partnerRoom?: LocationName }): void {
+    this.returnRoom  = data?.returnRoom  ?? 'living_room';
+    this.playerRoom  = data?.playerRoom  ?? this.returnRoom;
+    this.partnerRoom = data?.partnerRoom ?? 'living_room';
   }
 
   create(): void {
@@ -83,11 +85,11 @@ export class MagazineMayhemScene extends Phaser.Scene {
     const resume  = this._pauseBtn(480, 310, 'Resume',  '#4ADE80', () => this._resume());
     const restart = this._pauseBtn(480, 365, 'Restart', '#F5B547', () => {
       this._clearPause();
-      this.scene.restart({ returnRoom: this.returnRoom, playerRoom: this.playerRoom });
+      this.scene.restart({ returnRoom: this.returnRoom, playerRoom: this.playerRoom, partnerRoom: this.partnerRoom });
     });
     const quit    = this._pauseBtn(480, 420, 'Quit',    '#F87171', () => {
       PocketBaseService.clearActivity();
-      this.scene.start('RoomScene', { room: this.returnRoom, playerRoom: this.playerRoom });
+      this.scene.start('RoomScene', { room: this.returnRoom, playerRoom: this.playerRoom, partnerRoom: this.partnerRoom });
     });
 
     this.pauseOverlay = [dim, panel, title, resume, restart, quit];
@@ -186,7 +188,7 @@ export class MagazineMayhemScene extends Phaser.Scene {
     backBtn.on('pointerout',  () => backBtn.setColor('#2DD4BF'));
     backBtn.on('pointerdown', () => {
       PocketBaseService.clearActivity();
-      this.scene.start('RoomScene', { room: this.returnRoom, playerRoom: this.playerRoom });
+      this.scene.start('RoomScene', { room: this.returnRoom, playerRoom: this.playerRoom, partnerRoom: this.partnerRoom });
     });
   }
 }
