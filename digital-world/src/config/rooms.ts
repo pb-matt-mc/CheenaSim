@@ -1,4 +1,6 @@
-export type RoomName = 'living_room' | 'kitchen' | 'study' | 'bedroom' | 'bathroom' | 'garden';
+export type HouseRoom = 'living_room' | 'kitchen' | 'study' | 'bedroom' | 'bathroom' | 'garden';
+export type RoomName = HouseRoom; // backwards-compat alias
+export type LocationName = HouseRoom | 'work';
 
 // (x,y) = sim standing position + click-zone center; (w,h) = click-zone size.
 // Calibrated against the 960×640 house.png pixel-art background.
