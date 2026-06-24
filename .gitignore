@@ -1,5 +1,6 @@
 passkey
 passkey.pub
+digital-world/.env.local
 pb_data/
 *.zip
 .bash_history

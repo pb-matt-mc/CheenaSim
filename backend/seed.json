@@ -1,0 +1,20 @@
+{
+  "users": {
+    "user-a": {
+      "id": "ni83c3ngp8ujxpe",
+      "email": "user-a@local.dev",
+      "hue": 120,
+      "positionsRecordId": "smndwiryxkcnre6"
+    },
+    "user-b": {
+      "id": "3sz2su0i1q54j8v",
+      "email": "user-b@local.dev",
+      "hue": 240,
+      "positionsRecordId": "fdv9w3fq3ets70e"
+    }
+  },
+  "notes": {
+    "board1": "Flash with user-a credentials. MY_RECORD_ID=smndwiryxkcnre6, PARTNER_RECORD_ID=fdv9w3fq3ets70e",
+    "board2": "Flash with user-b credentials. MY_RECORD_ID=fdv9w3fq3ets70e, PARTNER_RECORD_ID=smndwiryxkcnre6"
+  }
+}

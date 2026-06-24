@@ -3,14 +3,15 @@
 // ---------- WiFi / PocketBase ----------
 // These are populated by the WiFi provisioning portal on first boot (stored in NVS).
 // Hard-code them here only for development flashing convenience; clear before gifting.
-#define PB_URL          ""   // e.g. "https://abc.trycloudflare.com"
-#define PB_EMAIL        ""
-#define PB_PASSWORD     ""
+#define PB_URL          "https://minecraftserver.tailfd0db9.ts.net:8443"
+#define PB_EMAIL        "user-a@local.dev"   // board-1 (you); change to user-b@local.dev for board-2
+#define PB_PASSWORD     ""                   // fill before flashing — do not commit
 
 // ---------- PocketBase record IDs ----------
-// From backend/seed.json — fill after Phase 1 is complete
-#define MY_RECORD_ID      ""
-#define PARTNER_RECORD_ID ""
+// board-1 (user-a): MY=smndwiryxkcnre6  PARTNER=fdv9w3fq3ets70e
+// board-2 (user-b): MY=fdv9w3fq3ets70e  PARTNER=smndwiryxkcnre6
+#define MY_RECORD_ID      "smndwiryxkcnre6"  // user-a positions record
+#define PARTNER_RECORD_ID "fdv9w3fq3ets70e"  // user-b positions record
 
 // ---------- Hardware ----------
 #define I2C_SDA       21
