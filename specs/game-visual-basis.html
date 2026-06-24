@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan: Game Visual Basis — CheenaSim</title>
+<style>
+  :root {
+    --bg:        #0E1116;
+    --surface:   #161B22;
+    --surface-2: #1C2230;
+    --border:    #2A3344;
+    --text:      #E6EAF2;
+    --muted:     #9AA7BD;
+    --dim:       #5C6B85;
+    --violet:    #8B7FF7;
+    --cyan:      #2DD4BF;
+    --amber:     #F5B547;
+    --green:     #4ADE80;
+    --red:       #F87171;
+    --radius:    14px;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(139,127,247,0.10), transparent 60%),
+      radial-gradient(1000px 500px at -10% 10%, rgba(45,212,191,0.07), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.65;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 56px 24px 120px; }
+
+  header h1 {
+    font-size: clamp(1.9rem, 4vw, 2.7rem);
+    line-height: 1.12;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+    background: linear-gradient(100deg, var(--text) 30%, var(--violet) 70%, var(--cyan));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin: 0 0 18px; }
+
+  details.meta {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    margin-bottom: 8px;
+    font-size: 0.86rem;
+  }
+  details.meta summary { cursor: pointer; color: var(--violet); font-weight: 600; font-family: var(--mono); letter-spacing: 0.02em; }
+  details.meta dl { display: grid; grid-template-columns: 130px 1fr; gap: 4px 14px; margin: 12px 0 4px; }
+  details.meta dt { color: var(--dim); font-family: var(--mono); font-size: 0.8rem; }
+  details.meta dd { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 0.8rem; word-break: break-word; }
+
+  section { margin-top: 52px; scroll-margin-top: 24px; }
+  h2 { font-size: 1.6rem; letter-spacing: -0.01em; margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h2::before { content: "▚ "; color: var(--violet); }
+  h3 { font-size: 1.18rem; margin: 26px 0 10px; color: var(--text); }
+  h4 { font-size: 1rem; margin: 20px 0 8px; color: var(--cyan); font-family: var(--mono); }
+  p { color: var(--text); }
+  a { color: var(--cyan); }
+
+  figure { margin: 22px 0; text-align: center; }
+  figure img { max-width: 100%; height: auto; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.45); }
+  figcaption { color: var(--dim); font-size: 0.82rem; margin-top: 10px; font-style: italic; }
+  .img-placeholder { border: 1px dashed var(--border); border-radius: var(--radius); padding: 30px; color: var(--dim); font-family: var(--mono); font-size: 0.8rem; background: var(--surface); }
+
+  code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-2); color: var(--cyan); padding: 1px 6px; border-radius: 6px; border: 1px solid var(--border); }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; overflow-x: auto; font-size: 0.84rem; line-height: 1.55; }
+  pre code { background: none; border: none; padding: 0; color: var(--text); }
+  .tok-k { color: var(--violet); }
+  .tok-s { color: var(--green); }
+  .tok-c { color: var(--dim); font-style: italic; }
+  .tok-f { color: var(--cyan); }
+
+  ul, ol { padding-left: 22px; }
+  li { margin: 5px 0; }
+  ul.checklist { list-style: none; padding-left: 4px; }
+  ul.checklist > li { margin: 7px 0; }
+
+  .tag { font-family: var(--mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); vertical-align: middle; }
+  .tag.existing { color: var(--amber); border-color: rgba(245,181,71,0.4); background: rgba(245,181,71,0.08); }
+  .tag.new      { color: var(--green); border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.08); }
+  .tag.gen      { color: var(--violet); border-color: rgba(139,127,247,0.4); background: rgba(139,127,247,0.08); }
+
+  .status { font-weight: 700; color: var(--dim); }
+
+  .phase { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--violet); border-radius: var(--radius); padding: 4px 22px 22px; margin: 22px 0; }
+  .phase h3 { color: var(--text); }
+
+  .loop { margin-top: 16px; padding: 12px 16px; background: rgba(45,212,191,0.06); border: 1px solid rgba(45,212,191,0.3); border-radius: 10px; font-size: 0.9rem; color: var(--text); }
+
+  .callout { border-radius: var(--radius); padding: 14px 18px; margin: 18px 0; border: 1px solid var(--border); background: var(--surface-2); }
+  .callout.warn { border-color: rgba(245,181,71,0.4); background: rgba(245,181,71,0.06); }
+  .callout.key  { border-color: rgba(139,127,247,0.45); background: rgba(139,127,247,0.07); }
+  .callout .lbl { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--violet); display:block; margin-bottom: 4px; }
+  .callout.warn .lbl { color: var(--amber); }
+
+  table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 0.88rem; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--violet); font-family: var(--mono); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  td code { font-size: 0.82em; }
+  .yes { color: var(--green); } .no { color: var(--red); } .chg { color: var(--amber); }
+
+  details.qa, details.amend { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin: 10px 0; }
+  details.qa summary, details.amend summary { cursor: pointer; color: var(--cyan); font-weight: 600; }
+  .qa-answer { color: var(--muted); margin-top: 10px; }
+
+  hr.soft { border: none; border-top: 1px solid var(--border); margin: 34px 0; }
+  .pill { font-family: var(--mono); font-size: 0.72rem; color: var(--cyan); border: 1px solid var(--border); padding: 2px 8px; border-radius: 999px; }
+</style>
+</head>
+<body>
+<main>
+
+  <header>
+    <h1>Plan: Game Visual Basis — CheenaSim</h1>
+    <p class="tagline">House shell, room plate backgrounds, room props, and expanded character sprites — the complete visual foundation for all rooms and minigames.</p>
+    <details class="meta">
+      <summary>Metadata</summary>
+      <dl>
+        <dt>created</dt>      <dd>2026-06-24</dd>
+        <dt>modified</dt>     <dd>2026-06-24</dd>
+        <dt>commits</dt>      <dd></dd>
+        <dt>agent name</dt>   <dd>Claude Sonnet 4.6</dd>
+        <dt>session id</dt>   <dd>f28cb753-287f-459d-a033-8c779f084da6</dd>
+        <dt>back refs</dt>    <dd>../multimodal-sims-ld-gift.html (parent project plan — Phase 2 Digital World), activity-minigame-system.html (consumes these assets — Phases 5–7)</dd>
+        <dt>forward refs</dt> <dd>activity-minigame-system.html (animation keys and room backgrounds required before Phase 5 of that plan can be built)</dd>
+      </dl>
+    </details>
+  </header>
+
+  <figure>
+    <div class="img-placeholder">image: game visual basis — generate with the Image Generation workflow</div>
+    <figcaption>All visual layers: house shell → room plates → prop sprites → expanded character spritesheets, feeding into Phaser's asset registry.</figcaption>
+  </figure>
+
+  <section id="purpose">
+    <h2>Purpose</h2>
+    <p>Produce every visual asset the CheenaSim game needs to run: a polished house background, eight full-screen room backgrounds (six house rooms + work + driving), per-room interactive prop sprites, and expanded character spritesheets covering all animation poses referenced in the activity/minigame system plan. Alongside the assets, establish a robust TypeScript asset manifest and Phaser lazy-load pipeline so any future minigame can declare its asset dependencies in one place and have them loaded automatically — with zero manual wiring in <code>BootScene</code>.</p>
+  </section>
+
+  <section id="problem">
+    <h2>Problem</h2>
+    <p>The game currently ships with three assets: <code>house.png</code>, <code>sim-violet.png</code>, and <code>sim-cyan.png</code>. The character spritesheets are 128×48 (four idle frames only). There are no room close-up backgrounds, no prop sprites for POI interactions, and no animation frames for sitting, walking, reading, or driving. The activity/minigame system plan (phases 4–7) requires all of these assets before a single minigame can run. There is also no pipeline — adding a new minigame asset today means manually editing <code>BootScene.preload()</code> and remembering which file goes where.</p>
+    <figure>
+      <div class="img-placeholder">image: asset gap diagram — generate with the Image Generation workflow</div>
+      <figcaption>Current: 3 files. Needed: 8 room backgrounds + 12+ prop sprites + 2 expanded character sheets + asset manifest.</figcaption>
+    </figure>
+  </section>
+
+  <section id="solution">
+    <h2>Solution</h2>
+    <p>Generate all assets using OpenAI <code>gpt-image-1</code> (via the project's <code>generate_gpt_image.py</code> / <code>edit_gpt_image.py</code> scripts) combined with ImageMagick v7 (<code>magick</code>) for resize, palette reduction, and spritesheet stitching. Assets are organized into a predictable directory structure. A <code>src/config/asset-manifest.ts</code> registry maps every room and activity to its required files. A generic <code>PreloadScene</code> lazy-loads activity-specific assets before launching any minigame, so <code>BootScene</code> only ever loads the minimum needed for the main house view. Character spritesheets are extended in-place from 4 frames (idle) to 22 frames covering all animation poses the minigame system needs.</p>
+    <figure>
+      <div class="img-placeholder">image: asset pipeline diagram — generate with the Image Generation workflow</div>
+      <figcaption>OpenAI generates source art → ImageMagick processes dimensions → asset-manifest.ts wires rooms/activities → PreloadScene lazy-loads per minigame.</figcaption>
+    </figure>
+  </section>
+
+  <section id="files" class="files">
+    <h2>Relevant Files</h2>
+
+    <h3>Existing Files — Modified</h3>
+    <ul>
+      <li><span class="tag existing">existing</span> <code>digital-world/public/assets/house.png</code> — evaluate quality; regenerate if placeholder-quality; must stay 960×640 with same room zone coordinates</li>
+      <li><span class="tag existing">existing</span> <code>digital-world/public/assets/sim-violet.png</code> — expand from 128×48 (4 frames) to 704×48 (22 frames) by appending new animation poses</li>
+      <li><span class="tag existing">existing</span> <code>digital-world/public/assets/sim-cyan.png</code> — same expansion as sim-violet</li>
+      <li><span class="tag existing">existing</span> <code>digital-world/src/scenes/BootScene.ts</code> — update <code>preload()</code> for new core assets; extend <code>_createAnims()</code> to register all 7 animation types</li>
+      <li><span class="tag existing">existing</span> <code>digital-world/src/config/rooms.ts</code> — add <code>bgKey: string</code> field to each room entry pointing to its room-plate background asset key</li>
+    </ul>
+
+    <h3>New Files — Generated Assets</h3>
+    <ul>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/rooms/bedroom-bg.png</code> — 960×640 bedroom plate background</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/rooms/bathroom-bg.png</code> — 960×640 bathroom plate background</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/rooms/kitchen-bg.png</code> — 960×640 kitchen plate background</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/rooms/living-room-bg.png</code> — 960×640 living room plate background</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/rooms/garden-bg.png</code> — 960×640 garden/hallway plate background</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/rooms/study-bg.png</code> — 960×640 study plate background</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/rooms/work-bg.png</code> — 960×640 office/work plate background</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/rooms/driving-bg.png</code> — 960×640 road/commute background (horizontally tileable)</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/living-room-sofa.png</code> — 128×64 sofa prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/living-room-tv.png</code> — 64×64 TV prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/living-room-table.png</code> — 64×32 coffee table prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/living-room-magazine-pile.png</code> — 32×32 magazine pile (Magazine Mayhem)</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/bedroom-bed.png</code> — 128×80 bed prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/bedroom-dresser.png</code> — 64×64 dresser prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/bathroom-bathtub.png</code> — 96×64 bathtub prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/bathroom-sink.png</code> — 48×48 sink prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/kitchen-stove.png</code> — 64×64 stove prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/kitchen-fridge.png</code> — 32×64 fridge prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/kitchen-table.png</code> — 96×64 dining table prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/study-desk.png</code> — 128×48 desk prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/study-bookshelf.png</code> — 64×96 bookshelf prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/garden-door.png</code> — 48×80 front door prop</li>
+      <li><span class="tag gen">generated</span> <code>digital-world/public/assets/props/work-desk.png</code> — 128×48 office desk prop</li>
+    </ul>
+
+    <h3>New Files — Code</h3>
+    <ul>
+      <li><span class="tag new">new</span> <code>digital-world/src/config/asset-manifest.ts</code> — registry mapping rooms and activities to required asset keys; utility functions for Phaser preload</li>
+      <li><span class="tag new">new</span> <code>digital-world/src/scenes/PreloadScene.ts</code> — generic lazy-load scene; takes a list of asset keys + a target scene key; loads assets then launches target scene</li>
+    </ul>
+  </section>
+
+  <section id="phases">
+    <h2>Implementation Phases</h2>
+    <p><strong>IMPORTANT:</strong> Execute every phase and task step by step, in order, top to bottom.</p>
+    <p>Status markers: <code>[]</code> idle · <code>[wip]</code> in progress · <code>[x]</code> complete · <code>[f]</code> failed.</p>
+
+    <!-- ── PHASE 1 ── -->
+    <div class="phase">
+      <h3><code class="status">[]</code> Phase 1: Art Direction, Style Guide &amp; Pipeline Setup</h3>
+      <p>Define the visual conventions that every generated asset must follow, create the directory structure, and write the TypeScript asset manifest and PreloadScene. This is the skeleton everything else attaches to.</p>
+
+      <h4>1.1. Directory Structure</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <code>mkdir -p digital-world/public/assets/rooms</code></li>
+        <li><code class="status">[]</code> <code>mkdir -p digital-world/public/assets/props</code></li>
+      </ul>
+
+      <h4>1.2. Asset Manifest — <code>src/config/asset-manifest.ts</code></h4>
+      <p>Create this file with the following content:</p>
+      <pre><code><span class="tok-c">// Central registry: room → background key + prop asset keys.
+// Add new props here — PreloadScene picks them up automatically.</span>
+
+<span class="tok-k">export interface</span> <span class="tok-f">RoomAssets</span> {
+  bg:    <span class="tok-k">string</span>;      <span class="tok-c">// Phaser texture key for the room plate background</span>
+  props: <span class="tok-k">string</span>[];   <span class="tok-c">// Phaser texture keys for interactive prop sprites</span>
+}
+
+<span class="tok-k">export const</span> <span class="tok-f">ROOM_ASSETS</span>: <span class="tok-f">Record</span>&lt;<span class="tok-k">string</span>, <span class="tok-f">RoomAssets</span>&gt; = {
+  bedroom:     { bg: <span class="tok-s">'rooms/bedroom-bg'</span>,     props: [<span class="tok-s">'props/bedroom-bed'</span>,          <span class="tok-s">'props/bedroom-dresser'</span>] },
+  bathroom:    { bg: <span class="tok-s">'rooms/bathroom-bg'</span>,    props: [<span class="tok-s">'props/bathroom-bathtub'</span>,     <span class="tok-s">'props/bathroom-sink'</span>] },
+  kitchen:     { bg: <span class="tok-s">'rooms/kitchen-bg'</span>,     props: [<span class="tok-s">'props/kitchen-stove'</span>,       <span class="tok-s">'props/kitchen-fridge'</span>,   <span class="tok-s">'props/kitchen-table'</span>] },
+  living_room: { bg: <span class="tok-s">'rooms/living-room-bg'</span>, props: [<span class="tok-s">'props/living-room-sofa'</span>,    <span class="tok-s">'props/living-room-tv'</span>,   <span class="tok-s">'props/living-room-table'</span>, <span class="tok-s">'props/living-room-magazine-pile'</span>] },
+  garden:      { bg: <span class="tok-s">'rooms/garden-bg'</span>,      props: [<span class="tok-s">'props/garden-door'</span>] },
+  study:       { bg: <span class="tok-s">'rooms/study-bg'</span>,       props: [<span class="tok-s">'props/study-desk'</span>,          <span class="tok-s">'props/study-bookshelf'</span>] },
+  work:        { bg: <span class="tok-s">'rooms/work-bg'</span>,        props: [<span class="tok-s">'props/work-desk'</span>] },
+  driving:     { bg: <span class="tok-s">'rooms/driving-bg'</span>,    props: [] },
+};
+
+<span class="tok-c">// Returns all asset keys needed for a given room (bg + props).</span>
+<span class="tok-k">export function</span> <span class="tok-f">getAssetsForRoom</span>(room: <span class="tok-k">string</span>): <span class="tok-k">string</span>[] {
+  <span class="tok-k">const</span> r = <span class="tok-f">ROOM_ASSETS</span>[room];
+  <span class="tok-k">if</span> (!r) <span class="tok-k">return</span> [];
+  <span class="tok-k">return</span> [r.bg, ...r.props];
+}
+
+<span class="tok-c">// Maps an asset key to its file path (relative to public/).</span>
+<span class="tok-k">export function</span> <span class="tok-f">assetPath</span>(key: <span class="tok-k">string</span>): <span class="tok-k">string</span> {
+  <span class="tok-k">return</span> <span class="tok-s">`assets/<span class="tok-f">${key}</span>.png`</span>;
+}
+</code></pre>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Create <code>src/config/asset-manifest.ts</code> with the content above</li>
+        <li><code class="status">[]</code> <code>npm run build</code> in <code>digital-world/</code> — TypeScript compiles cleanly with the new file</li>
+      </ul>
+
+      <h4>1.3. PreloadScene — <code>src/scenes/PreloadScene.ts</code></h4>
+      <p>A generic lazy-load scene. Minigame scenes start via <code>PreloadScene</code> when they need room-specific assets not loaded at boot. This keeps <code>BootScene</code> lean.</p>
+      <pre><code><span class="tok-k">import</span> Phaser <span class="tok-k">from</span> <span class="tok-s">'phaser'</span>;
+<span class="tok-k">import</span> { <span class="tok-f">assetPath</span> } <span class="tok-k">from</span> <span class="tok-s">'../config/asset-manifest'</span>;
+
+<span class="tok-k">export interface</span> <span class="tok-f">PreloadSceneData</span> {
+  assets:      <span class="tok-k">string</span>[];   <span class="tok-c">// asset keys to load (see asset-manifest)</span>
+  targetScene: <span class="tok-k">string</span>;    <span class="tok-c">// scene to start after loading</span>
+  targetData?: <span class="tok-k">object</span>;   <span class="tok-c">// forwarded to targetScene.init()</span>
+}
+
+<span class="tok-k">export class</span> <span class="tok-f">PreloadScene</span> <span class="tok-k">extends</span> Phaser.Scene {
+  <span class="tok-k">private</span> data!: <span class="tok-f">PreloadSceneData</span>;
+
+  <span class="tok-k">constructor</span>() { <span class="tok-k">super</span>({ key: <span class="tok-s">'PreloadScene'</span> }); }
+
+  <span class="tok-f">init</span>(data: <span class="tok-f">PreloadSceneData</span>): <span class="tok-k">void</span> { <span class="tok-k">this</span>.data = data; }
+
+  <span class="tok-f">preload</span>(): <span class="tok-k">void</span> {
+    <span class="tok-k">for</span> (<span class="tok-k">const</span> key <span class="tok-k">of</span> <span class="tok-k">this</span>.data.assets) {
+      <span class="tok-k">if</span> (!<span class="tok-k">this</span>.textures.<span class="tok-f">exists</span>(key)) {
+        <span class="tok-k">this</span>.load.<span class="tok-f">image</span>(key, <span class="tok-f">assetPath</span>(key));
+      }
+    }
+    <span class="tok-k">this</span>._drawProgress();
+  }
+
+  <span class="tok-f">create</span>(): <span class="tok-k">void</span> {
+    <span class="tok-k">this</span>.scene.<span class="tok-f">start</span>(<span class="tok-k">this</span>.data.targetScene, <span class="tok-k">this</span>.data.targetData);
+  }
+
+  <span class="tok-k">private</span> <span class="tok-f">_drawProgress</span>(): <span class="tok-k">void</span> {
+    <span class="tok-k">const</span> bar = <span class="tok-k">this</span>.add.<span class="tok-f">graphics</span>();
+    <span class="tok-k">this</span>.load.<span class="tok-f">on</span>(<span class="tok-s">'progress'</span>, (v: <span class="tok-k">number</span>) => {
+      bar.<span class="tok-f">clear</span>();
+      bar.<span class="tok-f">fillStyle</span>(<span class="tok-s">0x8b7ff7</span>);
+      bar.<span class="tok-f">fillRect</span>(<span class="tok-s">180</span>, <span class="tok-s">310</span>, <span class="tok-s">600</span> * v, <span class="tok-s">20</span>);
+    });
+  }
+}
+</code></pre>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Create <code>src/scenes/PreloadScene.ts</code> with the content above</li>
+        <li><code class="status">[]</code> Register <code>PreloadScene</code> in <code>src/main.ts</code> scene array (alongside BootScene and HomeScene)</li>
+        <li><code class="status">[]</code> <code>npm run build</code> exits 0</li>
+      </ul>
+
+      <h4>1.4. Testing Strategy</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <code>npm run build</code> — TypeScript compiles cleanly; no import errors</li>
+        <li><code class="status">[]</code> In browser console: <code>import('/src/config/asset-manifest.ts').then(m =&gt; console.log(Object.keys(m.ROOM_ASSETS)))</code> — logs all 8 room keys</li>
+      </ul>
+      <div class="loop">🔁 Do not proceed until the build passes and directory structure is in place.</div>
+    </div>
+
+    <!-- ── PHASE 2 ── -->
+    <div class="phase">
+      <h3><code class="status">[]</code> Phase 2: House Background Shell</h3>
+      <p>Audit the existing <code>house.png</code> (960×640) and decide whether to keep or regenerate it. The house must show six distinct rooms in a 3×2 grid with enough visual clarity that players recognise each room at a glance. The pixel coordinates in <code>rooms.ts</code> must remain valid.</p>
+
+      <figure>
+        <div class="img-placeholder">image: house background layout diagram — generate with the Image Generation workflow</div>
+        <figcaption>3×2 grid with room center coordinates from rooms.ts. New house.png must preserve these zones.</figcaption>
+      </figure>
+
+      <h4>2.1. Audit Existing house.png</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Open the game in a browser (<code>npm run dev</code> in <code>digital-world/</code>) and inspect the current <code>house.png</code> at full 960×640 canvas size</li>
+        <li><code class="status">[]</code> Verify: each of the 6 rooms is clearly distinguishable with its accent color (bedroom=purple, bathroom=teal, kitchen=warm amber, living_room=red, garden=green, study=blue)</li>
+        <li><code class="status">[]</code> Verify: room labels or visual cues align with the coordinates in <code>rooms.ts</code> (bedroom top-left center ~225,200; bathroom top-center ~460,195; kitchen top-right ~695,200; living_room bot-left ~225,375; garden bot-center ~460,375; study bot-right ~695,375)</li>
+        <li><code class="status">[]</code> <strong>Decision:</strong> if the existing house.png is visually clear and polished enough → mark this step <code>[x]</code> and skip 2.2. If it looks like a placeholder or needs improvement → proceed to 2.2.</li>
+      </ul>
+
+      <h4>2.2. Regenerate house.png (if needed)</h4>
+      <p>Generate prompt (copy exactly — keep under 400 chars for the API):</p>
+      <pre><code>"pixel art 2D top-down house interior, 6 rooms in 3-column 2-row grid separated by dark walls.
+Top row left-to-right: bedroom (purple rug, cozy bed), bathroom (teal tiles, bathtub), kitchen (warm wood, dining table).
+Bottom row: living room (red sofa, TV), garden hallway entry (front door, plant pots), home study (blue desk, bookshelves).
+Flat pixel art style, 960x640, dark wall outlines, muted warm palette."</code></pre>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Run generation:
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art 2D top-down house interior, 6 rooms in 3-column 2-row grid separated by dark walls. Top row: bedroom (purple rug cozy bed), bathroom (teal tiles bathtub), kitchen (warm wood dining table). Bottom row: living room (red sofa TV), garden hallway entry (front door plant pots), home study (blue desk bookshelves). Flat pixel art, dark wall outlines, muted warm palette." \
+  /tmp/house-new.png --size 1536x1024 --quality high</code></pre>
+        </li>
+        <li><code class="status">[]</code> Resize to game canvas:
+          <pre><code>magick /tmp/house-new.png -resize 960x640! \
+  digital-world/public/assets/house.png</code></pre>
+        </li>
+        <li><code class="status">[]</code> Reload browser — verify sims still land in correct room zones. If a zone is visually misaligned, adjust <code>rooms.ts</code> coordinates to match new art (do NOT re-generate; tweak coords instead).</li>
+      </ul>
+
+      <h4>2.3. Testing Strategy</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> In browser: open game, both sims appear on house background with correct room placement</li>
+        <li><code class="status">[]</code> <code>identify digital-world/public/assets/house.png</code> — reports <code>960x640</code></li>
+      </ul>
+      <div class="loop">🔁 Do not proceed until house.png is 960×640 and sims position correctly in all 6 rooms.</div>
+    </div>
+
+    <!-- ── PHASE 3 ── -->
+    <div class="phase">
+      <h3><code class="status">[]</code> Phase 3: Room Plate Backgrounds</h3>
+      <p>Generate eight 960×640 full-room backgrounds. These are used as the scene background when a player enters a room close-up (minigame launch, DrivingScene, WorkScene). They share a consistent art style with the house background but show more detail at full canvas scale.</p>
+
+      <figure>
+        <div class="img-placeholder">image: room plate examples — generate with the Image Generation workflow</div>
+        <figcaption>Each room plate is a full 960×640 view with room-specific furniture and accent color, consistent pixel art style.</figcaption>
+      </figure>
+
+      <div class="callout key">
+        <span class="lbl">Style Prompt Prefix</span>
+        Prepend this to every room background generation prompt: <em>"pixel art 2D room interior, slight top-down angle, cozy chibi game aesthetic, flat muted lighting, dark 1px outlines, warm palette, no characters, clean empty room background, 960x640"</em>
+      </div>
+
+      <h4>3.1. Bedroom Background</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code>
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art 2D room interior, slight top-down angle, cozy chibi game aesthetic, flat muted lighting, dark 1px outlines, warm palette, no characters, clean empty room background, 960x640. Bedroom: soft purple accent rug, wooden double bed with pillow, small wooden dresser, bedside lamp, curtained window, lavender wall tone." \
+  /tmp/bedroom-bg.png --size 1536x1024 --quality high && \
+magick /tmp/bedroom-bg.png -resize 960x640! \
+  digital-world/public/assets/rooms/bedroom-bg.png</code></pre>
+        </li>
+      </ul>
+
+      <h4>3.2. Bathroom Background</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code>
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art 2D room interior, slight top-down angle, cozy chibi game aesthetic, flat muted lighting, dark 1px outlines, warm palette, no characters, clean empty room background, 960x640. Bathroom: teal and white square tiles floor, white pedestal bathtub, small sink with mirror, towel rack with fluffy towels, soft teal wall." \
+  /tmp/bathroom-bg.png --size 1536x1024 --quality high && \
+magick /tmp/bathroom-bg.png -resize 960x640! \
+  digital-world/public/assets/rooms/bathroom-bg.png</code></pre>
+        </li>
+      </ul>
+
+      <h4>3.3. Kitchen Background</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code>
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art 2D room interior, slight top-down angle, cozy chibi game aesthetic, flat muted lighting, dark 1px outlines, warm palette, no characters, clean empty room background, 960x640. Kitchen: warm amber wood countertop, tiled backsplash, small gas stove, white refrigerator, round dining table with two chairs, window above sink." \
+  /tmp/kitchen-bg.png --size 1536x1024 --quality high && \
+magick /tmp/kitchen-bg.png -resize 960x640! \
+  digital-world/public/assets/rooms/kitchen-bg.png</code></pre>
+        </li>
+      </ul>
+
+      <h4>3.4. Living Room Background</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code>
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art 2D room interior, slight top-down angle, cozy chibi game aesthetic, flat muted lighting, dark 1px outlines, warm palette, no characters, clean empty room background, 960x640. Living room: cozy red fabric sofa against wall, wooden coffee table, flat TV mounted on wall, soft area rug, warm side lamp, bookshelf with magazines." \
+  /tmp/living-room-bg.png --size 1536x1024 --quality high && \
+magick /tmp/living-room-bg.png -resize 960x640! \
+  digital-world/public/assets/rooms/living-room-bg.png</code></pre>
+        </li>
+      </ul>
+
+      <h4>3.5. Garden / Hallway Entry Background</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code>
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art 2D room interior, slight top-down angle, cozy chibi game aesthetic, flat muted lighting, dark 1px outlines, warm palette, no characters, clean empty room background, 960x640. Hallway garden entry: warm wooden front door center, small potted plants flanking door, coat hooks on wall, welcome mat, warm sunlight from doorway, light wood floor." \
+  /tmp/garden-bg.png --size 1536x1024 --quality high && \
+magick /tmp/garden-bg.png -resize 960x640! \
+  digital-world/public/assets/rooms/garden-bg.png</code></pre>
+        </li>
+      </ul>
+
+      <h4>3.6. Study Background</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code>
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art 2D room interior, slight top-down angle, cozy chibi game aesthetic, flat muted lighting, dark 1px outlines, warm palette, no characters, clean empty room background, 960x640. Study: blue wooden desk with computer monitor, tall bookshelf full of colorful books, desk lamp with warm glow, small window, blue accent walls, cozy reading nook." \
+  /tmp/study-bg.png --size 1536x1024 --quality high && \
+magick /tmp/study-bg.png -resize 960x640! \
+  digital-world/public/assets/rooms/study-bg.png</code></pre>
+        </li>
+      </ul>
+
+      <h4>3.7. Work / Office Background</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code>
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art 2D room interior, slight top-down angle, cozy chibi game aesthetic, flat muted lighting, dark 1px outlines, warm palette, no characters, clean empty room background, 960x640. Modern office: clean white desk with dual monitors, ergonomic chair, city window view, minimal decor, soft neutral walls, potted plant in corner, mug on desk." \
+  /tmp/work-bg.png --size 1536x1024 --quality high && \
+magick /tmp/work-bg.png -resize 960x640! \
+  digital-world/public/assets/rooms/work-bg.png</code></pre>
+        </li>
+      </ul>
+
+      <h4>3.8. Driving / Commute Background</h4>
+      <p>This background must tile horizontally seamlessly — it will be used as a <code>tileSprite</code> in <code>DrivingScene</code> with <code>tilePositionX += 4</code> per frame. Generate with a centered road view that repeats cleanly.</p>
+      <ul class="checklist">
+        <li><code class="status">[]</code>
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art 2D side-scrolling road background, chibi game style, seamlessly tileable horizontally, flat muted sky, asphalt road with white lane lines, roadside trees and bushes, no characters, no text, simple repeating landscape, 960x640, warm muted palette, dark outlines." \
+  /tmp/driving-bg.png --size 1536x1024 --quality high && \
+magick /tmp/driving-bg.png -resize 960x640! \
+  digital-world/public/assets/rooms/driving-bg.png</code></pre>
+        </li>
+        <li><code class="status">[]</code> Visually inspect the driving background — the left and right edges should connect well enough for a scrolling loop. If there is a visible seam, re-generate with the prompt adjusted to emphasize "seamless horizontal tile, left and right edges match."</li>
+      </ul>
+
+      <h4>3.9. Testing Strategy</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <code>ls -la digital-world/public/assets/rooms/</code> — confirms 8 files exist</li>
+        <li><code class="status">[]</code> <code>identify digital-world/public/assets/rooms/*.png | grep -v "960x640"</code> — output must be empty (all 960×640)</li>
+        <li><code class="status">[]</code> Load each background via a test HTML snippet: <code>&lt;img src="../digital-world/public/assets/rooms/bedroom-bg.png" style="width:960px;height:640px"&gt;</code> — all 8 display correctly</li>
+      </ul>
+      <div class="loop">🔁 Do not proceed until all 8 room backgrounds exist at exactly 960×640.</div>
+    </div>
+
+    <!-- ── PHASE 4 ── -->
+    <div class="phase">
+      <h3><code class="status">[]</code> Phase 4: Room Prop Sprites</h3>
+      <p>Generate transparent-background prop sprites for interactive objects in each room. These are loaded by <code>PreloadScene</code> when entering a room minigame and placed as <code>Phaser.GameObjects.Image</code> instances over the room plate background. Size conventions: furniture ~64–128px wide, small items ~32px wide, all heights proportional.</p>
+
+      <figure>
+        <div class="img-placeholder">image: prop sprites catalog — generate with the Image Generation workflow</div>
+        <figcaption>Each prop is a standalone transparent PNG, named per the asset manifest key, sized to its in-game footprint.</figcaption>
+      </figure>
+
+      <div class="callout key">
+        <span class="lbl">Prop Generation Pattern</span>
+        For every prop below, run the generate + process pipeline. The style prefix for props is:
+        <em>"pixel art game prop, transparent background, flat 2D chibi style, dark outlines, single object, no shadow, centered"</em>
+        Then resize with magick to exact target dimensions.
+      </div>
+
+      <h4>4.1. Living Room Props</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <strong>sofa</strong> (128×64): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, red fabric two-seat sofa, top-front view, cozy, no shadow"</code> → <code>magick … -resize 128x64!</code> → <code>props/living-room-sofa.png</code></li>
+        <li><code class="status">[]</code> <strong>TV</strong> (64×64): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, wall-mounted flat TV screen, off/dark screen, simple design"</code> → <code>magick … -resize 64x64!</code> → <code>props/living-room-tv.png</code></li>
+        <li><code class="status">[]</code> <strong>coffee table</strong> (64×32): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, small wooden coffee table, top view, minimal"</code> → <code>magick … -resize 64x32!</code> → <code>props/living-room-table.png</code></li>
+        <li><code class="status">[]</code> <strong>magazine pile</strong> (32×32): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, small stack of colorful magazines, top-front view"</code> → <code>magick … -resize 32x32!</code> → <code>props/living-room-magazine-pile.png</code></li>
+      </ul>
+
+      <h4>4.2. Bedroom Props</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <strong>bed</strong> (128×80): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, double bed with purple duvet and pillow, slight top-front angle"</code> → <code>magick … -resize 128x80!</code> → <code>props/bedroom-bed.png</code></li>
+        <li><code class="status">[]</code> <strong>dresser</strong> (64×64): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, wooden dresser with three drawers, front view"</code> → <code>magick … -resize 64x64!</code> → <code>props/bedroom-dresser.png</code></li>
+      </ul>
+
+      <h4>4.3. Bathroom Props</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <strong>bathtub</strong> (96×64): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, white rectangular bathtub, slight top-front angle, no water"</code> → <code>magick … -resize 96x64!</code> → <code>props/bathroom-bathtub.png</code></li>
+        <li><code class="status">[]</code> <strong>sink</strong> (48×48): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, white pedestal bathroom sink with faucet, front view"</code> → <code>magick … -resize 48x48!</code> → <code>props/bathroom-sink.png</code></li>
+      </ul>
+
+      <h4>4.4. Kitchen Props</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <strong>stove</strong> (64×64): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, small gas stove with four burners, front-top view, warm grey"</code> → <code>magick … -resize 64x64!</code> → <code>props/kitchen-stove.png</code></li>
+        <li><code class="status">[]</code> <strong>fridge</strong> (32×64): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, white refrigerator tall, front view"</code> → <code>magick … -resize 32x64!</code> → <code>props/kitchen-fridge.png</code></li>
+        <li><code class="status">[]</code> <strong>dining table</strong> (96×64): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, round wooden dining table with two chairs, slight top-front angle"</code> → <code>magick … -resize 96x64!</code> → <code>props/kitchen-table.png</code></li>
+      </ul>
+
+      <h4>4.5. Study Props</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <strong>desk</strong> (128×48): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, blue wooden desk with computer monitor and keyboard, top-front view"</code> → <code>magick … -resize 128x48!</code> → <code>props/study-desk.png</code></li>
+        <li><code class="status">[]</code> <strong>bookshelf</strong> (64×96): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, tall bookshelf filled with colorful books, front view"</code> → <code>magick … -resize 64x96!</code> → <code>props/study-bookshelf.png</code></li>
+      </ul>
+
+      <h4>4.6. Garden / Hallway Props</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <strong>front door</strong> (48×80): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, warm wooden front door with small window and brass handle, front view"</code> → <code>magick … -resize 48x80!</code> → <code>props/garden-door.png</code></li>
+      </ul>
+
+      <h4>4.7. Work Props</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <strong>office desk</strong> (128×48): <code>"pixel art game prop, transparent background, flat 2D chibi, dark outlines, modern white office desk with dual monitors and keyboard, top-front view"</code> → <code>magick … -resize 128x48!</code> → <code>props/work-desk.png</code></li>
+      </ul>
+
+      <h4>4.8. Shared Generation Script</h4>
+      <p>For convenience, here is the full two-step template for any prop. Replace <code>PROMPT</code>, <code>WxH</code>, and <code>FILENAME</code>:</p>
+      <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "PROMPT" /tmp/prop-gen.png --size 1536x1024 --quality high
+
+magick /tmp/prop-gen.png \
+  -resize WxH! \
+  -background none \
+  digital-world/public/assets/props/FILENAME.png</code></pre>
+
+      <h4>4.9. Testing Strategy</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <code>ls digital-world/public/assets/props/ | wc -l</code> — should be 13</li>
+        <li><code class="status">[]</code> <code>identify digital-world/public/assets/props/*.png | awk '{print $3}'</code> — review all dimensions match their spec (no obviously wrong sizes)</li>
+        <li><code class="status">[]</code> Spot-check: load <code>props/living-room-sofa.png</code> in browser — transparent background, red sofa visible, no white box around it</li>
+      </ul>
+      <div class="loop">🔁 Do not proceed until all 13 prop PNGs exist and display with transparent backgrounds.</div>
+    </div>
+
+    <!-- ── PHASE 5 ── -->
+    <div class="phase">
+      <h3><code class="status">[]</code> Phase 5: Character Sprite Sheet Expansion</h3>
+      <p>Extend both <code>sim-violet.png</code> and <code>sim-cyan.png</code> from 4 frames (128×48) to 22 frames (704×48). Each frame is 32×48px. New animation poses are generated with OpenAI using the existing frame as a color/style reference via the edit endpoint, then downscaled to 32×48 and stitched into the existing sheet.</p>
+
+      <figure>
+        <div class="img-placeholder">image: sprite sheet expansion map — generate with the Image Generation workflow</div>
+        <figcaption>22 frames × 32px = 704px wide. Frames 0–3 are existing idle; frames 4–21 are the new poses appended right.</figcaption>
+      </figure>
+
+      <div class="callout key">
+        <span class="lbl">Frame Map</span>
+        <table>
+          <thead><tr><th>Frames</th><th>Anim Key</th><th>Count</th><th>Loop</th><th>fps</th></tr></thead>
+          <tbody>
+            <tr><td>0–3</td><td><code>_idle</code></td><td>4</td><td>yes</td><td>4</td></tr>
+            <tr><td>4–7</td><td><code>_walk</code></td><td>4</td><td>yes</td><td>8</td></tr>
+            <tr><td>8–10</td><td><code>_sit_couch</code></td><td>3</td><td>no</td><td>6</td></tr>
+            <tr><td>11–12</td><td><code>_idle_sitting</code></td><td>2</td><td>yes</td><td>2</td></tr>
+            <tr><td>13–15</td><td><code>_sit_desk</code></td><td>3</td><td>no</td><td>6</td></tr>
+            <tr><td>16–19</td><td><code>_reading_magazine</code></td><td>4</td><td>yes</td><td>4</td></tr>
+            <tr><td>20–21</td><td><code>_driving</code></td><td>2</td><td>yes</td><td>4</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <span class="lbl">Generation Strategy</span>
+        The API edit endpoint takes the existing sprite as visual context, so generate at high resolution, then use ImageMagick nearest-neighbor downscale to 32×48 for a pixel art look. Run the pipeline for <strong>violet first</strong>, validate it looks right, then mirror the exact same prompts for cyan substituting the color scheme.
+      </div>
+
+      <h4>5.1. Extract Reference Frame</h4>
+      <p>Use one idle frame as style reference for all edits:</p>
+      <ul class="checklist">
+        <li><code class="status">[]</code>
+          <pre><code>magick digital-world/public/assets/sim-violet.png \
+  -crop 32x48+0+0 +repage /tmp/violet-ref.png
+
+magick digital-world/public/assets/sim-cyan.png \
+  -crop 32x48+0+0 +repage /tmp/cyan-ref.png</code></pre>
+        </li>
+      </ul>
+
+      <h4>5.2. Generate New Poses — Violet</h4>
+      <p>For each animation group, generate a reference image and process it down to the correct multi-frame strip. The generate script is used (not edit) with a detailed prompt specifying style match:</p>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <strong>walk (4 frames)</strong>: Generate 4 walking poses as a horizontal strip
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art sprite sheet, 4 frames horizontal strip, chibi character walking animation, purple-violet hair and clothing, warm skin, 32x48 per frame style, white background, front-facing walk cycle: right foot forward, both feet together, left foot forward, both feet together. Clean minimal pixel art." \
+  /tmp/violet-walk-strip.png --size 1536x1024 --quality high
+
+magick /tmp/violet-walk-strip.png -resize 128x48! /tmp/violet-walk-4f.png</code></pre>
+        </li>
+        <li><code class="status">[]</code> <strong>sit_couch (3 frames)</strong>: 3-frame sit-down transition
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art sprite sheet, 3 frames horizontal strip, chibi character sitting down on couch, purple-violet hair and clothing, warm skin, 32x48 per frame style, white background. Frame 1: starting to sit (half crouch), Frame 2: landing on seat, Frame 3: fully seated relaxed. Clean minimal pixel art." \
+  /tmp/violet-sitcouch-strip.png --size 1536x1024 --quality high
+
+magick /tmp/violet-sitcouch-strip.png -resize 96x48! /tmp/violet-sitcouch-3f.png</code></pre>
+        </li>
+        <li><code class="status">[]</code> <strong>idle_sitting (2 frames)</strong>: subtle seated idle loop
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art sprite sheet, 2 frames horizontal strip, chibi character seated idle animation, purple-violet hair and clothing, warm skin, 32x48 per frame style, white background. Slight breathing motion: Frame 1 normal seated, Frame 2 very slight upward shift. Clean minimal pixel art." \
+  /tmp/violet-idlesit-strip.png --size 1536x1024 --quality high
+
+magick /tmp/violet-idlesit-strip.png -resize 64x48! /tmp/violet-idlesit-2f.png</code></pre>
+        </li>
+        <li><code class="status">[]</code> <strong>sit_desk (3 frames)</strong>: sit-at-desk transition
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art sprite sheet, 3 frames horizontal strip, chibi character sitting at desk, purple-violet hair and clothing, warm skin, 32x48 per frame style, white background. Frame 1: approaching desk standing, Frame 2: pulling chair out, Frame 3: seated at desk leaning slightly forward. Clean minimal pixel art." \
+  /tmp/violet-sitdesk-strip.png --size 1536x1024 --quality high
+
+magick /tmp/violet-sitdesk-strip.png -resize 96x48! /tmp/violet-sitdesk-3f.png</code></pre>
+        </li>
+        <li><code class="status">[]</code> <strong>reading_magazine (4 frames)</strong>: reading loop
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art sprite sheet, 4 frames horizontal strip, chibi character reading a magazine, purple-violet hair and clothing, warm skin, 32x48 per frame style, white background. Loop: holding magazine up, turning page slightly, reading down, back to start. Clean minimal pixel art." \
+  /tmp/violet-reading-strip.png --size 1536x1024 --quality high
+
+magick /tmp/violet-reading-strip.png -resize 128x48! /tmp/violet-reading-4f.png</code></pre>
+        </li>
+        <li><code class="status">[]</code> <strong>driving (2 frames)</strong>: steering wheel loop
+          <pre><code>uv run /var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py \
+  "pixel art sprite sheet, 2 frames horizontal strip, chibi character driving holding steering wheel, purple-violet hair and clothing, warm skin, 32x48 per frame style, white background. Frame 1: hands slightly left on wheel, Frame 2: hands slightly right on wheel. Clean minimal pixel art." \
+  /tmp/violet-driving-strip.png --size 1536x1024 --quality high
+
+magick /tmp/violet-driving-strip.png -resize 64x48! /tmp/violet-driving-2f.png</code></pre>
+        </li>
+      </ul>
+
+      <h4>5.3. Stitch Violet Spritesheet</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Stitch all strips together with the existing idle as the first 4 frames:
+          <pre><code>magick \
+  digital-world/public/assets/sim-violet.png \
+  /tmp/violet-walk-4f.png \
+  /tmp/violet-sitcouch-3f.png \
+  /tmp/violet-idlesit-2f.png \
+  /tmp/violet-sitdesk-3f.png \
+  /tmp/violet-reading-4f.png \
+  /tmp/violet-driving-2f.png \
+  +append digital-world/public/assets/sim-violet.png</code></pre>
+        </li>
+        <li><code class="status">[]</code> Verify: <code>identify digital-world/public/assets/sim-violet.png</code> → must report <code>704x48</code></li>
+      </ul>
+
+      <h4>5.4. Generate New Poses — Cyan</h4>
+      <p>Mirror all steps in 5.2–5.3 for sim-cyan. Replace "purple-violet hair and clothing" with "cyan-teal hair and clothing" in every prompt. Output files use <code>/tmp/cyan-*</code> prefix and stitch into <code>sim-cyan.png</code>.</p>
+      <ul class="checklist">
+        <li><code class="status">[]</code> walk (4 frames) — cyan</li>
+        <li><code class="status">[]</code> sit_couch (3 frames) — cyan</li>
+        <li><code class="status">[]</code> idle_sitting (2 frames) — cyan</li>
+        <li><code class="status">[]</code> sit_desk (3 frames) — cyan</li>
+        <li><code class="status">[]</code> reading_magazine (4 frames) — cyan</li>
+        <li><code class="status">[]</code> driving (2 frames) — cyan</li>
+        <li><code class="status">[]</code> Stitch: same <code>+append</code> command using <code>sim-cyan.png</code> as base and cyan tmp files</li>
+        <li><code class="status">[]</code> <code>identify digital-world/public/assets/sim-cyan.png</code> → <code>704x48</code></li>
+      </ul>
+
+      <h4>5.5. Testing Strategy</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Both spritesheets are exactly <code>704x48</code></li>
+        <li><code class="status">[]</code> Open in an image viewer — visually scan all 22 frames per character; each pose section should be recognizable</li>
+        <li><code class="status">[]</code> In browser with game running: open console and call <code>scene.anims.play('sim-violet_walk', scene.mySim.sprite)</code> — character should cycle through a walk animation</li>
+      </ul>
+      <div class="loop">🔁 Do not proceed until both sprites are 704×48 and all 7 animation types are visually confirmed in-browser.</div>
+    </div>
+
+    <!-- ── PHASE 6 ── -->
+    <div class="phase">
+      <h3><code class="status">[]</code> Phase 6: Phaser Asset Integration</h3>
+      <p>Wire all generated assets into the Phaser asset loading system. Update <code>BootScene</code> with the expanded spritesheet dimensions and all animation registrations. Add <code>bgKey</code> to the rooms config. Verify the game loads cleanly with no missing-texture errors.</p>
+
+      <h4>6.1. Update BootScene.ts</h4>
+      <p>The spritesheet load call needs updating because the sheet is now 704×48 (22 frames), not 128×48. Also register all 7 animation types:</p>
+      <pre><code><span class="tok-c">// In preload() — spritesheet dimensions unchanged (frameWidth/Height stay 32/48)
+// Phaser auto-calculates frame count from total width, so no change needed here.
+// But add the room-plate backgrounds for the main house view:</span>
+<span class="tok-k">this</span>.load.<span class="tok-f">image</span>(<span class="tok-s">'rooms/bedroom-bg'</span>,     <span class="tok-s">'assets/rooms/bedroom-bg.png'</span>);
+<span class="tok-k">this</span>.load.<span class="tok-f">image</span>(<span class="tok-s">'rooms/bathroom-bg'</span>,    <span class="tok-s">'assets/rooms/bathroom-bg.png'</span>);
+<span class="tok-k">this</span>.load.<span class="tok-f">image</span>(<span class="tok-s">'rooms/kitchen-bg'</span>,     <span class="tok-s">'assets/rooms/kitchen-bg.png'</span>);
+<span class="tok-k">this</span>.load.<span class="tok-f">image</span>(<span class="tok-s">'rooms/living-room-bg'</span>, <span class="tok-s">'assets/rooms/living-room-bg.png'</span>);
+<span class="tok-k">this</span>.load.<span class="tok-f">image</span>(<span class="tok-s">'rooms/garden-bg'</span>,      <span class="tok-s">'assets/rooms/garden-bg.png'</span>);
+<span class="tok-k">this</span>.load.<span class="tok-f">image</span>(<span class="tok-s">'rooms/study-bg'</span>,       <span class="tok-s">'assets/rooms/study-bg.png'</span>);
+<span class="tok-k">this</span>.load.<span class="tok-f">image</span>(<span class="tok-s">'rooms/work-bg'</span>,        <span class="tok-s">'assets/rooms/work-bg.png'</span>);
+<span class="tok-k">this</span>.load.<span class="tok-f">image</span>(<span class="tok-s">'rooms/driving-bg'</span>,    <span class="tok-s">'assets/rooms/driving-bg.png'</span>);</code></pre>
+      <p>Update <code>_createAnims(key)</code> to register all 7 animation types:</p>
+      <pre><code><span class="tok-k">private</span> <span class="tok-f">_createAnims</span>(key: <span class="tok-k">string</span>): <span class="tok-k">void</span> {
+  <span class="tok-k">const</span> def = [
+    { suffix: <span class="tok-s">'_idle'</span>,             start:  <span class="tok-s">0</span>,  end:  <span class="tok-s">3</span>, rate: <span class="tok-s">4</span>, repeat: -<span class="tok-s">1</span> },
+    { suffix: <span class="tok-s">'_walk'</span>,             start:  <span class="tok-s">4</span>,  end:  <span class="tok-s">7</span>, rate: <span class="tok-s">8</span>, repeat: -<span class="tok-s">1</span> },
+    { suffix: <span class="tok-s">'_sit_couch'</span>,        start:  <span class="tok-s">8</span>,  end: <span class="tok-s">10</span>, rate: <span class="tok-s">6</span>, repeat:  <span class="tok-s">0</span> },
+    { suffix: <span class="tok-s">'_idle_sitting'</span>,     start: <span class="tok-s">11</span>,  end: <span class="tok-s">12</span>, rate: <span class="tok-s">2</span>, repeat: -<span class="tok-s">1</span> },
+    { suffix: <span class="tok-s">'_sit_desk'</span>,         start: <span class="tok-s">13</span>,  end: <span class="tok-s">15</span>, rate: <span class="tok-s">6</span>, repeat:  <span class="tok-s">0</span> },
+    { suffix: <span class="tok-s">'_reading_magazine'</span>, start: <span class="tok-s">16</span>,  end: <span class="tok-s">19</span>, rate: <span class="tok-s">4</span>, repeat: -<span class="tok-s">1</span> },
+    { suffix: <span class="tok-s">'_driving'</span>,          start: <span class="tok-s">20</span>,  end: <span class="tok-s">21</span>, rate: <span class="tok-s">4</span>, repeat: -<span class="tok-s">1</span> },
+  ] <span class="tok-k">as const</span>;
+
+  <span class="tok-k">for</span> (<span class="tok-k">const</span> d <span class="tok-k">of</span> def) {
+    <span class="tok-k">this</span>.anims.<span class="tok-f">create</span>({
+      key:      <span class="tok-s">`${key}${d.suffix}`</span>,
+      frames:   <span class="tok-k">this</span>.anims.<span class="tok-f">generateFrameNumbers</span>(key, { start: d.start, end: d.end }),
+      frameRate: d.rate,
+      repeat:    d.repeat,
+    });
+  }
+}</code></pre>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Update <code>BootScene.preload()</code>: add 8 room background <code>load.image()</code> calls as shown above</li>
+        <li><code class="status">[]</code> Replace <code>_createAnims()</code> with the new multi-definition version</li>
+        <li><code class="status">[]</code> Note: <code>load.spritesheet</code> calls for sim-violet/cyan need no change — <code>frameWidth: 32, frameHeight: 48</code> still correct; Phaser calculates frame count from total image width automatically</li>
+      </ul>
+
+      <h4>6.2. Update rooms.ts — Add bgKey</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Add <code>bgKey: string</code> to the room type and populate each entry:
+          <pre><code><span class="tok-k">export const</span> <span class="tok-f">ROOMS</span>: <span class="tok-f">Record</span>&lt;<span class="tok-f">RoomName</span>, { x: <span class="tok-k">number</span>; y: <span class="tok-k">number</span>; w: <span class="tok-k">number</span>; h: <span class="tok-k">number</span>; bgKey: <span class="tok-k">string</span> }&gt; = {
+  bedroom:     { x: <span class="tok-s">225</span>, y: <span class="tok-s">200</span>, w: <span class="tok-s">175</span>, h: <span class="tok-s">155</span>, bgKey: <span class="tok-s">'rooms/bedroom-bg'</span> },
+  bathroom:    { x: <span class="tok-s">460</span>, y: <span class="tok-s">195</span>, w: <span class="tok-s">175</span>, h: <span class="tok-s">155</span>, bgKey: <span class="tok-s">'rooms/bathroom-bg'</span> },
+  kitchen:     { x: <span class="tok-s">695</span>, y: <span class="tok-s">200</span>, w: <span class="tok-s">175</span>, h: <span class="tok-s">155</span>, bgKey: <span class="tok-s">'rooms/kitchen-bg'</span> },
+  living_room: { x: <span class="tok-s">225</span>, y: <span class="tok-s">375</span>, w: <span class="tok-s">175</span>, h: <span class="tok-s">135</span>, bgKey: <span class="tok-s">'rooms/living-room-bg'</span> },
+  garden:      { x: <span class="tok-s">460</span>, y: <span class="tok-s">375</span>, w: <span class="tok-s">175</span>, h: <span class="tok-s">135</span>, bgKey: <span class="tok-s">'rooms/garden-bg'</span> },
+  study:       { x: <span class="tok-s">695</span>, y: <span class="tok-s">375</span>, w: <span class="tok-s">175</span>, h: <span class="tok-s">135</span>, bgKey: <span class="tok-s">'rooms/study-bg'</span> },
+};</code></pre>
+        </li>
+      </ul>
+
+      <h4>6.3. Smoke-Test PreloadScene</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> In browser console (game running at HomeScene), trigger a lazy load:
+          <pre><code>scene.scene.start('PreloadScene', {
+  assets: ['rooms/bedroom-bg', 'props/bedroom-bed'],
+  targetScene: 'HomeScene'
+})</code></pre>
+          Expect: a brief loading bar appears, then HomeScene restarts cleanly.
+        </li>
+        <li><code class="status">[]</code> Confirm that <code>textures.exists('rooms/bedroom-bg')</code> returns <code>true</code> after the PreloadScene completes</li>
+      </ul>
+
+      <h4>6.4. Testing Strategy</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <code>npm run build</code> exits 0 — no TypeScript errors</li>
+        <li><code class="status">[]</code> <code>npm run dev</code> — open browser, no 404s in network tab, no console errors</li>
+        <li><code class="status">[]</code> Both sims display idle animation on the house background correctly</li>
+        <li><code class="status">[]</code> Browser console: <code>scene.anims.play('sim-violet_reading_magazine', scene.mySim.sprite)</code> → violet sim plays the reading animation loop</li>
+        <li><code class="status">[]</code> Browser console: <code>scene.anims.play('sim-cyan_walk', scene.partnerSim.sprite)</code> → cyan sim plays the walk animation loop</li>
+      </ul>
+      <div class="loop">🔁 Do not mark this phase complete until the build passes, zero 404s appear in the network tab, and both character animation tests pass in the browser console.</div>
+    </div>
+
+  </section>
+
+  <section id="validation">
+    <h2>Validation Commands</h2>
+    <p>Execute these commands to confirm the full visual basis is complete and integrated:</p>
+    <ul class="checklist">
+      <li><code class="status">[]</code> <code>identify digital-world/public/assets/house.png | grep "960x640"</code> — house background correct size</li>
+      <li><code class="status">[]</code> <code>ls digital-world/public/assets/rooms/*.png | wc -l</code> → <code>8</code></li>
+      <li><code class="status">[]</code> <code>ls digital-world/public/assets/props/*.png | wc -l</code> → <code>13</code></li>
+      <li><code class="status">[]</code> <code>identify digital-world/public/assets/sim-violet.png | grep "704x48"</code> — violet spritesheet expanded</li>
+      <li><code class="status">[]</code> <code>identify digital-world/public/assets/sim-cyan.png | grep "704x48"</code> — cyan spritesheet expanded</li>
+      <li><code class="status">[]</code> <code>npm run build</code> (in <code>digital-world/</code>) — exits 0</li>
+      <li><code class="status">[]</code> Browser: game loads → both sims appear on house background → no 404s → no console errors</li>
+      <li><code class="status">[]</code> Browser console smoke-test: <code>['_idle','_walk','_sit_couch','_idle_sitting','_sit_desk','_reading_magazine','_driving'].forEach(s => scene.anims.play('sim-violet'+s, scene.mySim.sprite))</code> — all 7 animations play without error</li>
+      <li><code class="status">[]</code> PreloadScene smoke-test: lazy-loads bedroom assets and returns to HomeScene cleanly</li>
+    </ul>
+    <div class="loop">🔁 The plan is not complete until every box is checked. If a step cannot complete, mark <code>[f]</code> and note the reason, then proceed if the failure is non-blocking.</div>
+  </section>
+
+  <section id="notes">
+    <h2>Notes</h2>
+
+    <div class="callout key">
+      <span class="lbl">OPENAI_API_KEY Required</span>
+      All asset generation commands use <code>uv run .../generate_gpt_image.py</code>, which requires <code>OPENAI_API_KEY</code> to be set in the shell environment. Export it before running any generation step:
+      <code>export OPENAI_API_KEY=sk-...</code>. The key does not need to be committed to the repo.
+    </div>
+
+    <div class="callout warn">
+      <span class="lbl">Sprite Quality Trade-off</span>
+      AI-generated art downscaled to 32×48 will look rough compared to hand-crafted pixel art. This is intentional — the primary goal of this plan is to establish <em>functional</em> animation frames that unblock the minigame system. Visual polish of individual frames can be done in a follow-up pass using Aseprite or similar tools. The pipelines defined here serve as the repeatable template for that refinement too.
+    </div>
+
+    <h3>Why OpenAI for Game Assets?</h3>
+    <p>The design principle is speed over polish for the initial pass. Every generated asset serves as a functional placeholder that can be refined later without changing any code — the manifest keys, Phaser texture keys, and animation frame maps are all stable. Replacing <code>bedroom-bg.png</code> with hand-drawn pixel art in the future requires zero code changes.</p>
+
+    <h3>Minigame Asset Pipeline — Adding New Assets</h3>
+    <p>When a new minigame needs its own props or background variants:</p>
+    <ol>
+      <li>Add the new asset to <code>ROOM_ASSETS[roomName].props</code> in <code>asset-manifest.ts</code></li>
+      <li>Generate the PNG using the prop template from Phase 4.8 and drop it in <code>public/assets/props/</code></li>
+      <li>The minigame scene starts via <code>PreloadScene</code> with <code>getAssetsForRoom('room_name')</code> — it will pick up the new prop automatically</li>
+      <li>No changes to <code>BootScene</code> required</li>
+    </ol>
+
+    <h3>Driving Background Tileability</h3>
+    <p>The driving background is used as a <code>Phaser.GameObjects.TileSprite</code> in <code>DrivingScene</code>. If the generated image has a visible seam at the horizontal edges, use ImageMagick's offset trick to create a seamless tile:</p>
+    <pre><code>magick digital-world/public/assets/rooms/driving-bg.png \
+  -roll +480+0 \
+  /tmp/driving-bg-offset.png
+# Inspect /tmp/driving-bg-offset.png to find and fix the seam manually,
+# then re-save as driving-bg.png.</code></pre>
+
+    <h3>Image Dimensions Reference</h3>
+    <table>
+      <thead><tr><th>Asset type</th><th>Canonical size</th><th>Tool</th></tr></thead>
+      <tbody>
+        <tr><td>House background</td><td>960×640</td><td>OpenAI + <code>magick -resize 960x640!</code></td></tr>
+        <tr><td>Room plate backgrounds</td><td>960×640</td><td>OpenAI + <code>magick -resize 960x640!</code></td></tr>
+        <tr><td>Prop sprites</td><td>varies (see Phase 4)</td><td>OpenAI + <code>magick -resize WxH!</code></td></tr>
+        <tr><td>Character spritesheets</td><td>704×48 (22 × 32×48)</td><td>OpenAI per strip + <code>magick +append</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Relation to activity-minigame-system.html</h3>
+    <p>That plan's Phase 5 (<em>Animation System</em>) references animation keys like <code>_sit_couch</code>, <code>_idle_sitting</code>, <code>_sit_desk</code>, <code>_reading_magazine</code>, and <code>_driving</code>. All of those keys are registered by this plan's Phase 6. Phase 5 of the minigame plan can begin building the <code>AnimationPlayer</code> once this plan's Phase 6 is complete — the animation keys must exist in <code>BootScene</code> for the player to call.</p>
+
+    <hr class="soft">
+
+    <h3>Script Paths Quick Reference</h3>
+    <table>
+      <thead><tr><th>Script</th><th>Path</th></tr></thead>
+      <tbody>
+        <tr><td>Generate image</td><td><code>/var/home/pbmatt/.claude/skills/planf3/scripts/generate_gpt_image.py</code></td></tr>
+        <tr><td>Edit image</td><td><code>/var/home/pbmatt/.claude/skills/planf3/scripts/edit_gpt_image.py</code></td></tr>
+        <tr><td>ImageMagick</td><td><code>magick</code> (v7 — note: <code>convert</code> is deprecated)</td></tr>
+        <tr><td>Identify image</td><td><code>identify</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="amendments">
+    <h2>Amendments</h2>
+    <!-- first entry populated when plan is built against -->
+  </section>
+
+</main>
+</body>
+</html>
