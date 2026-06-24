@@ -11,6 +11,9 @@ export class MagazineMayhemScene extends Phaser.Scene {
   private countdownTimer!: Phaser.Time.TimerEvent;
   private returnRoom: HouseRoom = 'living_room';
 
+  private paused = false;
+  private pauseOverlay: Phaser.GameObjects.GameObject[] = [];
+
   constructor() { super({ key: 'MagazineMayhemScene' }); }
 
   init(data: { returnRoom?: HouseRoom }): void {
@@ -21,6 +24,7 @@ export class MagazineMayhemScene extends Phaser.Scene {
     this.score = 0;
     this.timeLeft = 30;
     this.magazines = [];
+    this.paused = false;
 
     this.add.rectangle(480, 320, 960, 640, 0x1a1a2e);
 
@@ -48,7 +52,73 @@ export class MagazineMayhemScene extends Phaser.Scene {
       callbackScope: this,
       repeat: 29,
     });
+
+    this.input.keyboard!.on('keydown-ESC', () => {
+      if (this.timeLeft <= 0) return; // already in end screen
+      if (this.paused) this._resume(); else this._openPause();
+    });
   }
+
+  // ── Pause ──────────────────────────────────────────────────────────────────
+
+  private _openPause(): void {
+    this.paused = true;
+    this.countdownTimer.paused = true;
+    this.tweens.pauseAll();
+
+    const dim = this.add.rectangle(480, 320, 960, 640, 0x000000, 0.55).setDepth(20);
+
+    const panel = this.add.graphics().setDepth(21);
+    panel.fillStyle(0x161B22, 1);
+    panel.fillRoundedRect(330, 210, 300, 260, 16);
+    panel.lineStyle(2, 0x8B7FF7, 0.9);
+    panel.strokeRoundedRect(330, 210, 300, 260, 16);
+
+    const title = this.add.text(480, 255, 'Paused', {
+      fontSize: '28px', color: '#8B7FF7', fontFamily: 'monospace', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(22);
+
+    const resume  = this._pauseBtn(480, 310, 'Resume',  '#4ADE80', () => this._resume());
+    const restart = this._pauseBtn(480, 365, 'Restart', '#F5B547', () => {
+      this._clearPause();
+      this.scene.restart({ returnRoom: this.returnRoom });
+    });
+    const quit    = this._pauseBtn(480, 420, 'Quit',    '#F87171', () => {
+      PocketBaseService.clearActivity();
+      this.scene.start('RoomScene', { room: this.returnRoom });
+    });
+
+    this.pauseOverlay = [dim, panel, title, resume, restart, quit];
+  }
+
+  private _resume(): void {
+    this._clearPause();
+    this.paused = false;
+    this.countdownTimer.paused = false;
+    this.tweens.resumeAll();
+  }
+
+  private _clearPause(): void {
+    this.pauseOverlay.forEach(o => o.destroy());
+    this.pauseOverlay = [];
+  }
+
+  private _pauseBtn(
+    x: number, y: number,
+    label: string, color: string,
+    onClick: () => void,
+  ): Phaser.GameObjects.Text {
+    const btn = this.add.text(x, y, label, {
+      fontSize: '20px', color, fontFamily: 'monospace', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(22).setInteractive({ useHandCursor: true });
+
+    btn.on('pointerover', () => btn.setAlpha(0.75));
+    btn.on('pointerout',  () => btn.setAlpha(1));
+    btn.on('pointerdown', onClick);
+    return btn;
+  }
+
+  // ── Game loop ──────────────────────────────────────────────────────────────
 
   private _spawnMagazine(): void {
     const emojis = ['📰', '📖', '📗', '📘', '📙'];
@@ -70,6 +140,7 @@ export class MagazineMayhemScene extends Phaser.Scene {
     });
 
     mag.on('pointerdown', () => {
+      if (this.paused) return;
       this.score++;
       this.scoreText.setText(`Score: ${this.score}`);
       this.tweens.add({
@@ -98,7 +169,7 @@ export class MagazineMayhemScene extends Phaser.Scene {
     this.magazines = [];
 
     this.add.rectangle(480, 320, 600, 300, 0x161B22).setStrokeStyle(2, 0x8B7FF7);
-    this.add.text(480, 240, 'Time\'s Up!', {
+    this.add.text(480, 240, "Time's Up!", {
       fontSize: '32px', color: '#8B7FF7', fontFamily: 'monospace',
     }).setOrigin(0.5);
     this.add.text(480, 300, `Final Score: ${this.score}`, {
