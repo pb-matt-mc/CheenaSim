@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan: Activity & Mini-game System</title>
+<style>
+  :root {
+    --bg:        #0E1116;
+    --surface:   #161B22;
+    --surface-2: #1C2230;
+    --border:    #2A3344;
+    --text:      #E6EAF2;
+    --muted:     #9AA7BD;
+    --dim:       #5C6B85;
+    --violet:    #8B7FF7;
+    --cyan:      #2DD4BF;
+    --amber:     #F5B547;
+    --green:     #4ADE80;
+    --red:       #F87171;
+    --radius:    14px;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(139,127,247,0.10), transparent 60%),
+      radial-gradient(1000px 500px at -10% 10%, rgba(45,212,191,0.07), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.65;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 56px 24px 120px; }
+
+  header h1 {
+    font-size: clamp(1.9rem, 4vw, 2.7rem);
+    line-height: 1.12;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+    background: linear-gradient(100deg, var(--text) 30%, var(--violet) 70%, var(--cyan));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .tagline { color: var(--muted); font-size: 1.05rem; margin: 0 0 18px; }
+
+  details.meta {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    margin-bottom: 8px;
+    font-size: 0.86rem;
+  }
+  details.meta summary { cursor: pointer; color: var(--violet); font-weight: 600; font-family: var(--mono); letter-spacing: 0.02em; }
+  details.meta dl { display: grid; grid-template-columns: 130px 1fr; gap: 4px 14px; margin: 12px 0 4px; }
+  details.meta dt { color: var(--dim); font-family: var(--mono); font-size: 0.8rem; }
+  details.meta dd { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 0.8rem; word-break: break-word; }
+
+  section { margin-top: 52px; scroll-margin-top: 24px; }
+  h2 { font-size: 1.6rem; letter-spacing: -0.01em; margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h2::before { content: "▚ "; color: var(--violet); }
+  h3 { font-size: 1.18rem; margin: 26px 0 10px; color: var(--text); }
+  h4 { font-size: 1rem; margin: 20px 0 8px; color: var(--cyan); font-family: var(--mono); }
+  p { color: var(--text); }
+  a { color: var(--cyan); }
+
+  figure { margin: 22px 0; text-align: center; }
+  figure img { max-width: 100%; height: auto; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.45); }
+  figcaption { color: var(--dim); font-size: 0.82rem; margin-top: 10px; font-style: italic; }
+  .img-placeholder { border: 1px dashed var(--border); border-radius: var(--radius); padding: 30px; color: var(--dim); font-family: var(--mono); font-size: 0.8rem; background: var(--surface); }
+
+  code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-2); color: var(--cyan); padding: 1px 6px; border-radius: 6px; border: 1px solid var(--border); }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; overflow-x: auto; font-size: 0.84rem; line-height: 1.55; }
+  pre code { background: none; border: none; padding: 0; color: var(--text); }
+  .tok-k { color: var(--violet); }
+  .tok-s { color: var(--green); }
+  .tok-c { color: var(--dim); font-style: italic; }
+  .tok-f { color: var(--cyan); }
+
+  ul, ol { padding-left: 22px; }
+  li { margin: 5px 0; }
+  ul.checklist { list-style: none; padding-left: 4px; }
+  ul.checklist > li { margin: 7px 0; }
+
+  .tag { font-family: var(--mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); vertical-align: middle; }
+  .tag.existing { color: var(--amber); border-color: rgba(245,181,71,0.4); background: rgba(245,181,71,0.08); }
+  .tag.new      { color: var(--green); border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.08); }
+  .tag.hw       { color: var(--cyan);  border-color: rgba(45,212,191,0.4); background: rgba(45,212,191,0.08); }
+
+  .status { font-weight: 700; color: var(--dim); }
+
+  .phase { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--violet); border-radius: var(--radius); padding: 4px 22px 22px; margin: 22px 0; }
+  .phase h3 { color: var(--text); }
+
+  .loop { margin-top: 16px; padding: 12px 16px; background: rgba(45,212,191,0.06); border: 1px solid rgba(45,212,191,0.3); border-radius: 10px; font-size: 0.9rem; color: var(--text); }
+
+  .callout { border-radius: var(--radius); padding: 14px 18px; margin: 18px 0; border: 1px solid var(--border); background: var(--surface-2); }
+  .callout.warn { border-color: rgba(245,181,71,0.4); background: rgba(245,181,71,0.06); }
+  .callout.key  { border-color: rgba(139,127,247,0.45); background: rgba(139,127,247,0.07); }
+  .callout .lbl { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--violet); display:block; margin-bottom: 4px; }
+  .callout.warn .lbl { color: var(--amber); }
+
+  table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 0.88rem; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--violet); font-family: var(--mono); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  td code { font-size: 0.82em; }
+  .yes { color: var(--green); } .no { color: var(--red); } .chg { color: var(--amber); }
+
+  details.qa, details.amend { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin: 10px 0; }
+  details.qa summary, details.amend summary { cursor: pointer; color: var(--cyan); font-weight: 600; }
+  .qa-answer { color: var(--muted); margin-top: 10px; }
+
+  hr.soft { border: none; border-top: 1px solid var(--border); margin: 34px 0; }
+  .pill { font-family: var(--mono); font-size: 0.72rem; color: var(--cyan); border: 1px solid var(--border); padding: 2px 8px; border-radius: 999px; }
+</style>
+</head>
+<body>
+<main>
+
+  <header>
+    <h1>Plan: Activity &amp; Mini-game System</h1>
+    <p class="tagline">Physical board controls room transitions. Digital world unlocks in-room exploration, mini-games, and a commute to work.</p>
+    <details class="meta">
+      <summary>Metadata</summary>
+      <dl>
+        <dt>created</dt>      <dd>2026-06-24</dd>
+        <dt>modified</dt>     <dd>2026-06-24</dd>
+        <dt>commits</dt>      <dd>51d2695</dd>
+        <dt>agent name</dt>   <dd>Claude Sonnet 4.6</dd>
+        <dt>session id</dt>   <dd>e5cfa940-ddf9-4369-88ec-8dcf828d4cd6</dd>
+        <dt>back refs</dt>    <dd>../multimodal-sims-ld-gift.html (parent project plan — Phases 1–3)</dd>
+        <dt>forward refs</dt> <dd>—</dd>
+      </dl>
+    </details>
+  </header>
+
+  <figure>
+    <div class="img-placeholder">HERO IMAGE: two-panel split — left panel shows a physical NFC gameboard with a figurine placed on the "living room" tile; right panel shows the digital Phaser house with a chibi sim sitting on a couch reading a magazine while the partner's screen shows an animated "reading" loop.</div>
+    <figcaption>Physical placement dictates rooms; digital input drives in-room activities that animate on both screens.</figcaption>
+  </figure>
+
+  <section id="purpose">
+    <h2>Purpose</h2>
+    <p>Extend the shared simulation from a simple presence indicator (which room are you in?) into a richer ambient experience: players explore within their current room, optionally start mini-games, and those activities animate on the partner's screen in real time. Room transitions remain exclusively physical (NFC board), preserving the tactile gift metaphor. A new "work" location adds a scripted commute sequence.</p>
+  </section>
+
+  <section id="problem">
+    <h2>Problem</h2>
+    <p>The current simulation only communicates <em>which room</em> a partner is in. There is no depth within a room — no activities, no animations beyond walking to a room center, and no way to express "what" the partner is doing. The "going to work" scenario is completely absent. Adding mini-games and new locations piecemeal without a registry system would require touching many files for each new game.</p>
+    <figure>
+      <div class="img-placeholder">PROBLEM IMAGE: diagram showing the current flat state machine — NFC chip → single room string → partner sees sim walk to room center → nothing else. Emphasize the "depth gap" with a dashed empty space inside each room.</div>
+      <figcaption>Current system: one NFC event → one room string → static sim placement. No in-room depth.</figcaption>
+    </figure>
+  </section>
+
+  <section id="solution">
+    <h2>Solution</h2>
+    <p>Introduce a two-level state: <strong>location</strong> (set exclusively by NFC) and <strong>activity</strong> (set digitally within the current location). Each activity has a self-animation (what you see on your screen) and a partner-animation (what your partner sees on their screen). All activities and locations are registered in a single config file — adding a new mini-game or POI requires one config entry and one Phaser Scene, nothing else. A dedicated "work" pipeline handles the commute: NFC chip → driving scene on your screen → "Arrived" button → work scene on your screen + "at work" on partner's screen.</p>
+    <figure>
+      <div class="img-placeholder">SOLUTION IMAGE: three-column architecture diagram: left column "Physical NFC" arrows to middle column "Location State (room/work)" which then branches to "self AnimSequence" (your screen) and "partner AnimSequence" (partner screen); underneath, a "ACTIVITIES registry" feeds both branches as a config layer.</div>
+      <figcaption>Two-level state (location + activity) with a single config registry driving all animations on both screens.</figcaption>
+    </figure>
+  </section>
+
+  <section id="files" class="files">
+    <h2>Relevant Files</h2>
+
+    <h3>Existing Files — Modified</h3>
+    <ul>
+      <li><span class="tag existing">existing</span> <code>digital-world/src/config/rooms.ts</code> — add <code>WorkLocation</code> type; extend <code>LocationName</code> union to include <code>'work'</code></li>
+      <li><span class="tag existing">existing</span> <code>digital-world/src/scenes/HomeScene.ts</code> — remove click-to-move-room handler; add POI overlay rendering; handle partner activity animations; handle non-house locations (driving, work)</li>
+      <li><span class="tag existing">existing</span> <code>digital-world/src/services/PocketBaseService.ts</code> — add <code>activity</code> and <code>activity_state</code> fields to publish/subscribe payloads; add <code>publishActivity(id, state)</code></li>
+      <li><span class="tag existing">existing</span> <code>digital-world/src/entities/Sim.ts</code> — add <code>playSequence(steps: AnimStep[])</code> method to execute multi-step animation sequences</li>
+      <li><span class="tag existing">existing</span> <code>firmware/src/nfc_grid.cpp</code> — add 7th channel (ch=6) mapped to <code>"work"</code></li>
+      <li><span class="tag existing">existing</span> <code>firmware/src/config.h</code> — add <code>NFC_CHANNEL_WORK 6</code> constant</li>
+      <li><span class="tag existing">existing</span> <code>backend/rules.md</code> — document new fields on positions collection</li>
+    </ul>
+
+    <h3>New Files</h3>
+    <ul>
+      <li><span class="tag new">new</span> <code>digital-world/src/config/activities.ts</code> — central registry: <code>ActivityDef</code> interface + <code>ACTIVITIES</code> map; adding a new mini-game = one entry here</li>
+      <li><span class="tag new">new</span> <code>digital-world/src/config/room-enter-anims.ts</code> — per-room enter animation sequences (walk-in → settle → idle loop)</li>
+      <li><span class="tag new">new</span> <code>digital-world/src/systems/ActivitySystem.ts</code> — manages POI button visibility, scene transitions, activity state publish/receive</li>
+      <li><span class="tag new">new</span> <code>digital-world/src/systems/AnimationPlayer.ts</code> — executes <code>AnimSequence[]</code> steps on a Sim; loops the last step if <code>loop: true</code></li>
+      <li><span class="tag new">new</span> <code>digital-world/src/scenes/DrivingScene.ts</code> — full-screen animated commute scene; shows "Arrived" button; transitions to WorkScene on confirm</li>
+      <li><span class="tag new">new</span> <code>digital-world/src/scenes/WorkScene.ts</code> — "at work" environment overlay; partner sees <code>activity_state: 'at_work'</code></li>
+      <li><span class="tag new">new</span> <code>digital-world/src/scenes/minigames/MagazineMayhemScene.ts</code> — example mini-game scene (tap magazines before timer); demonstrates the mini-game pattern</li>
+      <li><span class="tag new">new</span> <code>digital-world/src/ui/PoiOverlay.ts</code> — DOM-based POI button panel that appears when inside a room; reads from <code>ACTIVITIES</code> registry</li>
+      <li><span class="tag new">new</span> <code>digital-world/public/assets/driving-bg.png</code> — scrolling road/car background frames for DrivingScene</li>
+      <li><span class="tag new">new</span> <code>digital-world/public/assets/work-bg.png</code> — simple work-desk environment background</li>
+    </ul>
+  </section>
+
+  <section id="phases">
+    <h2>Implementation Phases</h2>
+    <p><strong>IMPORTANT:</strong> Execute every phase and task step by step, in order, top to bottom.</p>
+    <p>Status markers: <code>[]</code> idle · <code>[wip]</code> in progress · <code>[x]</code> complete · <code>[f]</code> failed.</p>
+
+    <!-- ── PHASE 4 ── -->
+    <div class="phase">
+      <h3><code class="status">[]</code> Phase 4: Schema &amp; Data Model Extension</h3>
+      <p>Extend the PocketBase <code>positions</code> collection with <code>activity</code> and <code>activity_state</code> fields, and update the TypeScript types to match. This is the data foundation every subsequent phase builds on.</p>
+
+      <h4>4.1. PocketBase Schema Update</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Open PocketBase Admin UI → Collections → <code>positions</code> → Edit</li>
+        <li><code class="status">[]</code> Add field: <code>activity</code> — type <strong>Text</strong>, optional, no default (null = idle/no activity)</li>
+        <li><code class="status">[]</code> Add field: <code>activity_state</code> — type <strong>Text</strong>, optional, no default (null = no sub-state)</li>
+        <li><code class="status">[]</code> Save collection. Verify existing records are unaffected (new fields default to empty string, coerce to null in TS layer)</li>
+        <li><code class="status">[]</code> Update <code>backend/rules.md</code> — document both new fields with their purpose</li>
+      </ul>
+
+      <h4>4.2. TypeScript Type Definitions</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> In <code>src/config/rooms.ts</code>: rename <code>RoomName</code> to <code>HouseRoom</code>, add <code>'work'</code> as a separate union <code>LocationName = HouseRoom | 'work'</code></li>
+        <li><code class="status">[]</code> Update <code>PocketBaseService</code>: <code>publishPosition(location: LocationName, source)</code> — keep existing signature shape; add <code>publishActivity(activityId: string | null, state: string | null): Promise&lt;void&gt;</code></li>
+        <li><code class="status">[]</code> Update <code>subscribeToPartner</code> callback payload type: <code>{ room: LocationName; activity: string | null; activity_state: string | null }</code></li>
+        <li><code class="status">[]</code> Update <code>loadInitialPositions()</code> to return activity + activity_state fields alongside room</li>
+      </ul>
+
+      <h4>4.3. Testing Strategy</h4>
+      <p>Manually verify via PocketBase Admin UI that the new fields accept and persist values correctly.</p>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Via Admin UI: edit a positions record, set <code>activity = "test"</code>, <code>activity_state = "running"</code> → save → confirm saved</li>
+        <li><code class="status">[]</code> Via REST: <code>PATCH /api/collections/positions/records/&lt;id&gt;</code> with <code>{"activity":null,"activity_state":null}</code> → confirm 200 and fields cleared</li>
+        <li><code class="status">[]</code> <code>npm run build</code> — TypeScript compiles cleanly with new types</li>
+      </ul>
+      <div class="loop">🔁 Do not proceed until schema fields exist and TypeScript build passes.</div>
+    </div>
+
+    <!-- ── PHASE 5 ── -->
+    <div class="phase">
+      <h3><code class="status">[]</code> Phase 5: Animation System</h3>
+      <p>Build the <code>AnimationPlayer</code> and the room-enter animation config. This is the engine that will drive all multi-step sim animations on both the player's and partner's screens.</p>
+
+      <figure>
+        <div class="img-placeholder">PHASE IMAGE: state-machine diagram showing AnimStep[] pipeline — Step 1 "walk_in" (800ms) → Step 2 "sit_couch" (400ms) → Step 3 "idle_sitting" (loop:true). Arrows between steps, final arrow loops back to self.</div>
+        <figcaption>AnimSequence executes steps in order; the final <code>loop:true</code> step repeats until interrupted by a new location or activity event.</figcaption>
+      </figure>
+
+      <h4>5.1. AnimStep &amp; AnimSequence Types</h4>
+      <p>Define in <code>src/config/room-enter-anims.ts</code>:</p>
+      <pre><code><span class="tok-k">export interface</span> <span class="tok-f">AnimStep</span> {
+  anim:     <span class="tok-k">string</span>;          <span class="tok-c">// Phaser anim key to play on the Sim</span>
+  duration: <span class="tok-k">number</span>;          <span class="tok-c">// ms — how long to hold before next step</span>
+  moveTo?:  <span class="tok-c">{ x: number; y: number }</span>; <span class="tok-c">// optional tween destination</span>
+  loop?:    <span class="tok-k">boolean</span>;          <span class="tok-c">// true = stay on this step until interrupted</span>
+}
+
+<span class="tok-k">export type</span> <span class="tok-f">AnimSequence</span> = <span class="tok-f">AnimStep</span>[];
+</code></pre>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Create file with <code>AnimStep</code> and <code>AnimSequence</code> types</li>
+        <li><code class="status">[]</code> Define <code>ROOM_ENTER_ANIMS: Record&lt;HouseRoom, AnimSequence&gt;</code> with enter sequences for all 6 rooms:
+          <ul>
+            <li><code>living_room</code>: walk to room center (800ms) → <code>sit_couch</code> pose (500ms) → <code>idle_sitting</code> (loop)</li>
+            <li><code>bedroom</code>: walk to room center (800ms) → <code>idle_standing</code> (loop)</li>
+            <li><code>bathroom</code>: walk to room center (600ms) → <code>idle_standing</code> (loop)</li>
+            <li><code>kitchen</code>: walk to room center (800ms) → <code>idle_standing</code> (loop)</li>
+            <li><code>study</code>: walk to room center (800ms) → <code>sit_desk</code> (400ms) → <code>idle_sitting</code> (loop)</li>
+            <li><code>garden</code>: walk to door position (800ms) → <code>idle_standing</code> (loop)</li>
+          </ul>
+        </li>
+      </ul>
+
+      <h4>5.2. AnimationPlayer System</h4>
+      <p>Create <code>src/systems/AnimationPlayer.ts</code>:</p>
+      <pre><code><span class="tok-k">export class</span> <span class="tok-f">AnimationPlayer</span> {
+  <span class="tok-k">private</span> _timer: <span class="tok-f">Phaser.Time.TimerEvent</span> | <span class="tok-k">null</span> = <span class="tok-k">null</span>;
+  <span class="tok-k">private</span> _loop = <span class="tok-k">false</span>;
+
+  <span class="tok-k">constructor</span>(<span class="tok-k">private</span> scene: <span class="tok-f">Phaser.Scene</span>, <span class="tok-k">private</span> sim: <span class="tok-f">Sim</span>) {}
+
+  <span class="tok-c">// Play a sequence of steps in order. Cancels any running sequence.</span>
+  <span class="tok-f">play</span>(seq: <span class="tok-f">AnimSequence</span>, stepIndex = <span class="tok-s">0</span>): <span class="tok-k">void</span> {
+    <span class="tok-k">this</span>.<span class="tok-f">stop</span>();
+    <span class="tok-k">const</span> step = seq[stepIndex];
+    <span class="tok-k">if</span> (!step) <span class="tok-k">return</span>;
+    <span class="tok-k">if</span> (step.moveTo) <span class="tok-k">this</span>.sim.<span class="tok-f">walkTo</span>(step.moveTo.x, step.moveTo.y);
+    <span class="tok-k">this</span>.sim.<span class="tok-f">playAnim</span>(step.anim);
+    <span class="tok-k">if</span> (step.loop) { <span class="tok-k">this</span>._loop = <span class="tok-k">true</span>; <span class="tok-k">return</span>; }
+    <span class="tok-k">this</span>._timer = <span class="tok-k">this</span>.scene.time.<span class="tok-f">delayedCall</span>(step.duration, () => {
+      <span class="tok-k">this</span>.<span class="tok-f">play</span>(seq, stepIndex + <span class="tok-s">1</span>);
+    });
+  }
+
+  <span class="tok-f">stop</span>(): <span class="tok-k">void</span> {
+    <span class="tok-k">this</span>._timer?.<span class="tok-f">destroy</span>(); <span class="tok-k">this</span>._timer = <span class="tok-k">null</span>; <span class="tok-k">this</span>._loop = <span class="tok-k">false</span>;
+  }
+}
+</code></pre>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Implement <code>AnimationPlayer</code> as above</li>
+        <li><code class="status">[]</code> Add <code>playAnim(key: string)</code> to <code>Sim.ts</code> — calls <code>sprite.play(key, true)</code> (ignoreIfPlaying = true)</li>
+        <li><code class="status">[]</code> Add sprite animation definitions to <code>BootScene.ts</code> for: <code>sit_couch</code>, <code>idle_sitting</code>, <code>sit_desk</code>, <code>idle_standing</code> — initially aliased to existing idle frames until new sprite art is created</li>
+      </ul>
+
+      <h4>5.3. Partner Animation Rendering</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> In <code>HomeScene.ts</code>: create a <code>partnerAnimPlayer = new AnimationPlayer(this, this.partnerSim)</code></li>
+        <li><code class="status">[]</code> When partner's room changes (realtime event): call <code>partnerAnimPlayer.play(ROOM_ENTER_ANIMS[newRoom])</code></li>
+        <li><code class="status">[]</code> When partner's activity changes: look up <code>ACTIVITIES[activityId].partnerAnim</code> → call <code>partnerAnimPlayer.play(partnerAnim)</code></li>
+        <li><code class="status">[]</code> When partner's activity clears (null): resume <code>ROOM_ENTER_ANIMS</code> idle loop for current room</li>
+      </ul>
+
+      <h4>5.4. Testing Strategy</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Open two browser tabs, log in as user-a and user-b</li>
+        <li><code class="status">[]</code> In Tab A's browser console: <code>PocketBaseService.publishPosition('living_room', 'digital')</code> → Tab B should show walk-in → sit → idle sequence on partner sim within 3s</li>
+        <li><code class="status">[]</code> Confirm <code>AnimationPlayer.stop()</code> properly cancels the previous sequence when a new room event arrives mid-animation</li>
+        <li><code class="status">[]</code> <code>npm run build</code> exits 0</li>
+      </ul>
+      <div class="loop">🔁 Do not proceed until partner sim plays multi-step room-enter animations reliably.</div>
+    </div>
+
+    <!-- ── PHASE 6 ── -->
+    <div class="phase">
+      <h3><code class="status">[]</code> Phase 6: Activity Registry &amp; Mini-game System</h3>
+      <p>Build the config-driven activity registry, the POI overlay UI, and the first mini-game (Magazine Mayhem). After this phase, adding a new mini-game requires only a config entry + a new Phaser Scene file.</p>
+
+      <figure>
+        <div class="img-placeholder">PHASE IMAGE: developer flow diagram — "add new mini-game" arrow points to ACTIVITIES config entry; arrow from that to PoiOverlay rendering new button; arrow from button to new Phaser scene launching; arrow from scene to partnerAnim playing on second device. Minimal boxes, clean dark background.</div>
+        <figcaption>Plugging in a new mini-game: one config entry, one scene file. The system wires everything else automatically.</figcaption>
+      </figure>
+
+      <h4>6.1. ActivityDef Interface &amp; ACTIVITIES Registry</h4>
+      <p>Create <code>src/config/activities.ts</code>:</p>
+      <pre><code><span class="tok-k">import type</span> { <span class="tok-f">HouseRoom</span> } <span class="tok-k">from</span> <span class="tok-s">'./rooms'</span>;
+<span class="tok-k">import type</span> { <span class="tok-f">AnimSequence</span> } <span class="tok-k">from</span> <span class="tok-s">'./room-enter-anims'</span>;
+
+<span class="tok-k">export interface</span> <span class="tok-f">ActivityDef</span> {
+  id:           <span class="tok-k">string</span>;
+  label:        <span class="tok-k">string</span>;
+  icon:         <span class="tok-k">string</span>;             <span class="tok-c">// emoji shown on POI button</span>
+  rooms:        <span class="tok-f">HouseRoom</span>[];        <span class="tok-c">// rooms where this activity appears</span>
+  selfSceneKey: <span class="tok-k">string</span>;             <span class="tok-c">// Phaser scene key launched on YOUR screen</span>
+  partnerAnim:  <span class="tok-f">AnimSequence</span>;       <span class="tok-c">// animation loop shown on PARTNER'S screen</span>
+}
+
+<span class="tok-k">export const</span> <span class="tok-f">ACTIVITIES</span>: <span class="tok-f">Record</span>&lt;<span class="tok-k">string</span>, <span class="tok-f">ActivityDef</span>&gt; = {
+  magazine_mayhem: {
+    id:           <span class="tok-s">'magazine_mayhem'</span>,
+    label:        <span class="tok-s">'Magazine Mayhem'</span>,
+    icon:         <span class="tok-s">'📰'</span>,
+    rooms:        [<span class="tok-s">'living_room'</span>],
+    selfSceneKey: <span class="tok-s">'MagazineMayhemScene'</span>,
+    partnerAnim:  [
+      { anim: <span class="tok-s">'idle_sitting'</span>, duration: <span class="tok-s">0</span> },
+      { anim: <span class="tok-s">'reading_magazine'</span>, duration: <span class="tok-s">2000</span>, loop: <span class="tok-k">true</span> },
+    ],
+  },
+  <span class="tok-c">// ← add new activities here. No other files need changing.</span>
+};
+</code></pre>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Create <code>src/config/activities.ts</code> with <code>ActivityDef</code> interface and <code>ACTIVITIES</code> map containing <code>magazine_mayhem</code></li>
+        <li><code class="status">[]</code> Ensure <code>ACTIVITIES</code> is a plain object (not a class) so it can be iterated with <code>Object.values()</code></li>
+      </ul>
+
+      <h4>6.2. PoiOverlay — DOM-based POI Buttons</h4>
+      <p>Create <code>src/ui/PoiOverlay.ts</code>. This is a DOM panel that sits over the Phaser canvas, not a Phaser GameObject. This keeps POI buttons trivially styleable with CSS.</p>
+      <ul class="checklist">
+        <li><code class="status">[]</code> <code>PoiOverlay</code> class: constructor takes a container element; exposes <code>showForRoom(room: HouseRoom)</code> and <code>hide()</code></li>
+        <li><code class="status">[]</code> <code>showForRoom</code>: filters <code>Object.values(ACTIVITIES)</code> to those whose <code>rooms</code> includes the current room; renders one button per match</li>
+        <li><code class="status">[]</code> Each button shows <code>activity.icon + ' ' + activity.label</code>; clicking emits a custom DOM event <code>cheena:start-activity</code> with <code>detail: { activityId }</code></li>
+        <li><code class="status">[]</code> Add a "✕ Stop" button that emits <code>cheena:stop-activity</code> (clears current activity, returns to room idle)</li>
+        <li><code class="status">[]</code> Add minimal CSS in <code>index.html</code>: <code>#poi-overlay</code> — fixed bottom strip above canvas, flex row of pills, styled with violet/cyan palette</li>
+      </ul>
+
+      <h4>6.3. ActivitySystem — Wiring</h4>
+      <p>Create <code>src/systems/ActivitySystem.ts</code>:</p>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Constructor: takes Phaser Game instance, PoiOverlay, PocketBaseService, scene manager reference</li>
+        <li><code class="status">[]</code> <code>onRoomChange(newRoom: LocationName)</code>: if house room → call <code>poiOverlay.showForRoom(newRoom)</code>; if <code>'work'</code> → hide overlay, publish <code>activity_state: 'driving'</code>, start DrivingScene</li>
+        <li><code class="status">[]</code> Listen for DOM <code>cheena:start-activity</code>: publish <code>activity = activityId</code> to PocketBase; call <code>game.scene.start(activityDef.selfSceneKey)</code></li>
+        <li><code class="status">[]</code> Listen for DOM <code>cheena:stop-activity</code>: publish <code>activity = null, activity_state = null</code>; return to HomeScene (restart or resume)</li>
+        <li><code class="status">[]</code> Integrate <code>ActivitySystem</code> into <code>HomeScene.create()</code></li>
+        <li><code class="status">[]</code> <strong>Remove</strong> the existing <code>pointerdown</code> room-change handler from <code>HomeScene</code>. Room changes are now NFC-only. (Digital click now only triggers POI interactions within a room.)</li>
+      </ul>
+
+      <h4>6.4. Magazine Mayhem — Example Mini-game Scene</h4>
+      <p>Create <code>src/scenes/minigames/MagazineMayhemScene.ts</code>. This scene is intentionally simple — it demonstrates the pattern, not a polished game.</p>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Scene key: <code>'MagazineMayhemScene'</code>; registered in <code>main.ts</code> scene array</li>
+        <li><code class="status">[]</code> On <code>create()</code>: fill with a dark background, show "Magazine Mayhem" title, spawn magazine objects that drift across the screen, countdown timer (30s)</li>
+        <li><code class="status">[]</code> Click/tap a magazine → score increments, magazine fades out; new magazine spawns</li>
+        <li><code class="status">[]</code> On timer end: show score, "Back" button → fires <code>cheena:stop-activity</code> → ActivitySystem handles teardown</li>
+        <li><code class="status">[]</code> Scene does NOT manage PocketBase directly; ActivitySystem handles all publish calls</li>
+      </ul>
+
+      <h4>6.5. Testing Strategy</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Tab A (user-a): manually call <code>PocketBaseService.publishPosition('living_room','digital')</code> → POI overlay appears with "📰 Magazine Mayhem" button</li>
+        <li><code class="status">[]</code> Click the button → MagazineMayhemScene launches; PocketBase record shows <code>activity: 'magazine_mayhem'</code></li>
+        <li><code class="status">[]</code> Tab B (user-b): partner sim plays <code>reading_magazine</code> animation loop within 3s of Tab A starting the game</li>
+        <li><code class="status">[]</code> Click "✕ Stop" in Tab A → activity clears; Tab B reverts to room idle animation</li>
+        <li><code class="status">[]</code> Add a second dummy activity entry to <code>ACTIVITIES</code> for a different room, verify its button appears only in that room without any code changes beyond the config</li>
+        <li><code class="status">[]</code> <code>npm run build</code> exits 0</li>
+      </ul>
+      <div class="loop">🔁 Do not proceed until both the POI system and partner animation propagation are confirmed working end-to-end.</div>
+    </div>
+
+    <!-- ── PHASE 7 ── -->
+    <div class="phase">
+      <h3><code class="status">[]</code> Phase 7: Work Location &amp; Driving Sequence</h3>
+      <p>Add the 7th NFC chip for "going to work". When activated, the player's screen shows a full-screen driving animation; the partner's screen shows them commuting. An "Arrived" button ends the commute and transitions both screens to the "at work" state.</p>
+
+      <figure>
+        <div class="img-placeholder">PHASE IMAGE: three-screen sequence — screen 1 "NFC Work Chip" tap icon; screen 2 "DrivingScene" showing animated road/car on player's device; screen 3 split showing player's "WorkScene" desk view on left and partner's house view with an "at work" status card on right. Dark pixel-art style matching project palette.</div>
+        <figcaption>Work flow: NFC tap → driving scene on your screen → "Arrived" → work scene on your screen + "at work" on partner's screen.</figcaption>
+      </figure>
+
+      <h4>7.1. Firmware: 7th NFC Channel</h4>
+      <ul class="checklist">
+        <li><span class="tag hw">hardware</span> <code class="status">[]</code> Add 7th PN532 reader to the TCA9548A mux at channel 6</li>
+        <li><code class="status">[]</code> In <code>firmware/src/config.h</code>: add <code>#define NFC_CHANNEL_WORK 6</code></li>
+        <li><code class="status">[]</code> In <code>firmware/src/nfc_grid.cpp</code>: extend <code>ROOM_NAMES</code> array to 7 entries; index 6 = <code>"work"</code>; extend scan loop to <code>ch &lt; 7</code></li>
+        <li><code class="status">[]</code> Flash updated firmware to both boards; verify serial output logs <code>"work"</code> when figurine placed on 7th reader</li>
+      </ul>
+
+      <h4>7.2. DrivingScene</h4>
+      <p>This scene runs on the player's own screen during the commute. The partner's screen shows a "commuting" animation via the standard activity/partner-anim pipeline.</p>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Scene key: <code>'DrivingScene'</code>; registered in <code>main.ts</code></li>
+        <li><code class="status">[]</code> Assets: <code>driving-bg.png</code> — a 960×640 horizontal road scene (or tileSprite for scrolling effect); generate with Python/PIL or draw programmatically</li>
+        <li><code class="status">[]</code> <code>create()</code>: add scrolling road <code>tileSprite</code>, a static car sprite (or re-use sim sprite with <code>'driving'</code> anim frame), dark overlay with "Commuting to work…" text</li>
+        <li><code class="status">[]</code> Road scrolls at constant speed using <code>update()</code> → <code>tileSprite.tilePositionX += 4</code></li>
+        <li><code class="status">[]</code> "Arrived at Work" button (DOM, styled like sign-in button): clicking fires <code>cheena:work-arrived</code> DOM event</li>
+        <li><code class="status">[]</code> Scene does NOT publish to PocketBase — ActivitySystem handles that</li>
+      </ul>
+
+      <h4>7.3. WorkScene</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Scene key: <code>'WorkScene'</code>; registered in <code>main.ts</code></li>
+        <li><code class="status">[]</code> Assets: <code>work-bg.png</code> — simple top-down desk/office environment; generate programmatically matching house pixel-art palette</li>
+        <li><code class="status">[]</code> <code>create()</code>: render work background; place player's sim at desk with <code>idle_sitting</code> anim; show small "Leave Work" button</li>
+        <li><code class="status">[]</code> "Leave Work" button: fires <code>cheena:leave-work</code> DOM event → ActivitySystem clears <code>activity_state</code>, publishes <code>room: 'garden'</code> (returning home fallback) and stops WorkScene → HomeScene restarts</li>
+      </ul>
+
+      <h4>7.4. ActivitySystem: Work Location Handling</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> In <code>ActivitySystem.onRoomChange('work')</code>:
+          <ul>
+            <li>Publish <code>{ room: 'work', activity: null, activity_state: 'driving' }</code></li>
+            <li>Hide POI overlay</li>
+            <li>Pause/stop HomeScene → start DrivingScene</li>
+          </ul>
+        </li>
+        <li><code class="status">[]</code> Listen for <code>cheena:work-arrived</code>:
+          <ul>
+            <li>Publish <code>{ activity_state: 'at_work' }</code></li>
+            <li>Stop DrivingScene → start WorkScene</li>
+          </ul>
+        </li>
+        <li><code class="status">[]</code> Listen for <code>cheena:leave-work</code>:
+          <ul>
+            <li>Publish <code>{ room: 'garden', activity: null, activity_state: null }</code> (firmware will override on next NFC scan)</li>
+            <li>Stop WorkScene → start HomeScene</li>
+          </ul>
+        </li>
+      </ul>
+
+      <h4>7.5. Partner View: Work States</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> In <code>HomeScene</code>'s partner subscription handler: when <code>activity_state === 'driving'</code> → call <code>partnerAnimPlayer.play(WORK_DRIVING_ANIM)</code> (sim walks to door, disappears, "driving" icon appears)</li>
+        <li><code class="status">[]</code> Define <code>WORK_DRIVING_ANIM</code> in <code>room-enter-anims.ts</code>: walk to garden door (800ms) → fade out (400ms) → show small car emoji label → loop</li>
+        <li><code class="status">[]</code> When <code>activity_state === 'at_work'</code> → show a DOM overlay card on partner's screen: "Partner is at work 💼" in bottom-right corner; partner sim hidden</li>
+        <li><code class="status">[]</code> When <code>room</code> returns to a house room (leave work) → remove "at work" card; show partner sim room-enter anim</li>
+      </ul>
+
+      <h4>7.6. Testing Strategy</h4>
+      <ul class="checklist">
+        <li><code class="status">[]</code> Tab A: manually call <code>PocketBaseService.publishPosition('work','physical')</code> → DrivingScene launches on Tab A</li>
+        <li><code class="status">[]</code> Tab B: partner sim shows WORK_DRIVING_ANIM within 3s</li>
+        <li><code class="status">[]</code> Tab A: click "Arrived at Work" → WorkScene loads; Tab B shows "at work" card</li>
+        <li><code class="status">[]</code> Tab A: click "Leave Work" → HomeScene resumes; Tab B shows room-enter anim for garden</li>
+        <li><code class="status">[]</code> Firmware: place figurine on 7th reader → serial shows <code>"work"</code>; same flow triggers over real NFC</li>
+        <li><code class="status">[]</code> <code>npm run build</code> exits 0; deploy to GitHub Pages</li>
+      </ul>
+      <div class="loop">🔁 Do not exit Phase 7 until the full work commute flow works end-to-end on two browser tabs AND via the physical 7th NFC reader.</div>
+    </div>
+
+  </section>
+
+  <section id="validation">
+    <h2>Validation Commands</h2>
+    <ul class="checklist">
+      <li><code class="status">[]</code> <code>npm run build</code> (in <code>digital-world/</code>) — TypeScript clean, Vite bundle produced</li>
+      <li><code class="status">[]</code> Two-tab E2E: login user-a + user-b → user-a enters living_room → user-b sees walk-in + sit + idle sequence</li>
+      <li><code class="status">[]</code> Two-tab E2E: user-a starts Magazine Mayhem → user-b sees reading animation loop within 3s</li>
+      <li><code class="status">[]</code> Two-tab E2E: user-a publishes <code>work/driving</code> → user-b sees commute anim; user-a clicks Arrived → user-b sees "at work" card</li>
+      <li><code class="status">[]</code> Dev sanity: add a throwaway activity to <code>ACTIVITIES</code> config pointing at a dummy scene → it appears in the correct room UI without touching any other file</li>
+      <li><code class="status">[]</code> GitHub Pages deploy succeeds (Actions workflow green)</li>
+    </ul>
+    <div class="loop">🔁 The plan is not complete until every box is checked and every flow passes on two real devices.</div>
+  </section>
+
+  <section id="notes">
+    <h2>Notes</h2>
+
+    <div class="callout key">
+      <span class="lbl">Design Principle — Physical Gating</span>
+      Room transitions are <strong>exclusively</strong> triggered by NFC. The digital world never moves a sim to a new room via click or keyboard. This preserves the physical metaphor: you must physically move the figurine to change rooms. Only in-room activities are digital. This is a deliberate constraint; do not add a "click to move room" fallback even in dev/testing — use <code>PocketBaseService.publishPosition()</code> via browser console for manual testing.
+    </div>
+
+    <div class="callout warn">
+      <span class="lbl">Mini-game Scene Lifecycle</span>
+      Mini-game scenes (<code>MagazineMayhemScene</code> etc.) must <em>never</em> directly call PocketBase. All state publish/subscribe flows through <code>ActivitySystem</code>. This keeps scenes testable in isolation and ensures the system stays coherent if a scene crashes or the user force-closes it.
+    </div>
+
+    <h3>Adding a New Mini-game — Checklist</h3>
+    <p>This is the entire dev workflow for a new mini-game (no other files need touching):</p>
+    <ol>
+      <li>Create <code>src/scenes/minigames/YourGameScene.ts</code> with a unique <code>key</code></li>
+      <li>Register the scene key in <code>main.ts</code> scene array</li>
+      <li>Add an entry to <code>ACTIVITIES</code> in <code>src/config/activities.ts</code> — set <code>rooms</code>, <code>selfSceneKey</code>, and <code>partnerAnim</code></li>
+      <li>Add any new sprite animation definitions to <code>BootScene.ts</code> (<code>anims.create()</code>)</li>
+      <li>Done. The POI overlay and partner animation will pick it up automatically.</li>
+    </ol>
+
+    <h3>Adding a New Location</h3>
+    <p>For locations beyond the 7 planned (6 house rooms + work):</p>
+    <ol>
+      <li>Add hardware NFC reader on the next mux channel</li>
+      <li>Extend <code>ROOM_NAMES</code> in <code>nfc_grid.cpp</code></li>
+      <li>Add the new location to <code>LocationName</code> union in <code>rooms.ts</code></li>
+      <li>Add an entry to <code>ROOM_ENTER_ANIMS</code> in <code>room-enter-anims.ts</code></li>
+      <li>If it has a special scene (like work): add handling in <code>ActivitySystem.onRoomChange()</code></li>
+      <li>If it's a regular house room: add coordinates to <code>ROOMS</code> and update <code>house.png</code></li>
+    </ol>
+
+    <h3>Partner-side "At Work" Display</h3>
+    <p>When a partner is at <code>room: 'work'</code>, the house view doesn't have a natural place to show them. Implementation decision: render a <strong>DOM overlay card</strong> in the bottom-right corner of the game canvas showing a status badge ("Partner is commuting 🚗" or "Partner is at work 💼"). The partner sim <code>Sim</code> GameObject is hidden (<code>setVisible(false)</code>) while this card is shown, and restored on return home.</p>
+
+    <h3>Sprite Animations Needed</h3>
+    <p>The following animation keys are referenced in this plan. They can initially map to existing idle frames (visual placeholder), with proper pixel-art frames added incrementally:</p>
+    <table>
+      <thead><tr><th>Key</th><th>Description</th><th>Frames needed</th></tr></thead>
+      <tbody>
+        <tr><td><code>idle_standing</code></td><td>Default standing idle bob</td><td>Alias existing <code>sim-violet_idle</code></td></tr>
+        <tr><td><code>idle_sitting</code></td><td>Sitting, slight breathing motion</td><td>2–4 frames</td></tr>
+        <tr><td><code>sit_couch</code></td><td>One-shot transition from standing to sitting</td><td>3–4 frames, no loop</td></tr>
+        <tr><td><code>sit_desk</code></td><td>One-shot sit at desk</td><td>3–4 frames, no loop</td></tr>
+        <tr><td><code>reading_magazine</code></td><td>Sim holds and flips magazine</td><td>4–6 frames, loop</td></tr>
+        <tr><td><code>driving</code></td><td>Sim "at wheel" motion</td><td>2–4 frames, loop</td></tr>
+      </tbody>
+    </table>
+
+    <hr class="soft">
+
+    <h3>State Summary</h3>
+    <p>Complete state that flows through PocketBase <code>positions</code> after this plan:</p>
+    <table>
+      <thead><tr><th>Scenario</th><th><code>room</code></th><th><code>activity</code></th><th><code>activity_state</code></th></tr></thead>
+      <tbody>
+        <tr><td>In living room, idle</td><td><code>living_room</code></td><td><code>null</code></td><td><code>null</code></td></tr>
+        <tr><td>Playing Magazine Mayhem</td><td><code>living_room</code></td><td><code>magazine_mayhem</code></td><td><code>null</code></td></tr>
+        <tr><td>Commuting to work</td><td><code>work</code></td><td><code>null</code></td><td><code>driving</code></td></tr>
+        <tr><td>At work</td><td><code>work</code></td><td><code>null</code></td><td><code>at_work</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="amendments">
+    <h2>Amendments</h2>
+    <!-- first entry populated when plan is built against -->
+  </section>
+
+</main>
+</body>
+</html>
