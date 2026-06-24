@@ -48,15 +48,14 @@ export class HomeScene extends Phaser.Scene {
       this._applyPartnerState(payload.room, payload.activity, payload.activity_state);
     });
 
+    // Click → zoom into that room (independent of sim position)
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      if (this._navigating) return;
       const room = roomAtPointer(p.x, p.y);
       if (!room) return;
-
-      PocketBaseService.publishPosition(room, 'digital');
-      this._navigateToRoom(room);
+      this._zoomInto(room);
     });
 
+    // 1-6 → simulate physical NFC board: move sim only, no zoom
     const hotkeys: Record<string, HouseRoom> = {
       ONE: 'bedroom', TWO: 'bathroom', THREE: 'kitchen',
       FOUR: 'living_room', FIVE: 'garden', SIX: 'study',
@@ -70,19 +69,25 @@ export class HomeScene extends Phaser.Scene {
     }
   }
 
-  /** Walk sim through the corridor, then fade into RoomScene */
+  /** Zoom camera into a room — does NOT move the sim */
+  private _zoomInto(room: HouseRoom): void {
+    this.mySim.stopWalk();
+    this._navigating = false;
+    this.cameras.main.fadeOut(250, 0, 0, 0);
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      this.scene.start('RoomScene', { room, playerRoom: this._currentRoom });
+    });
+  }
+
+  /** Walk sim through the corridor to target room (physical board simulation) */
   private _navigateToRoom(target: HouseRoom): void {
     this._navigating = true;
     const from = ROOMS[this._currentRoom];
     const to   = ROOMS[target];
 
-    // Build waypoints: exit current door → cross corridor to target door → enter room
     const waypoints: { x: number; y: number }[] = [];
-
-    // Only add corridor points if we're actually changing rooms
     if (target !== this._currentRoom) {
       waypoints.push(from.door);
-      // Cross corridor to target column (horizontal leg)
       if (from.door.x !== to.door.x) waypoints.push({ x: to.door.x, y: from.door.y });
       waypoints.push(to.door);
     }
@@ -91,10 +96,6 @@ export class HomeScene extends Phaser.Scene {
     this._walkPath(this.mySim, waypoints, () => {
       this._currentRoom = target;
       this._navigating = false;
-      this.cameras.main.fadeOut(250, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => {
-        this.scene.start('RoomScene', { room: target });
-      });
     });
   }
 

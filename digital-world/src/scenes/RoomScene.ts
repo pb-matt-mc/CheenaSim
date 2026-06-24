@@ -7,7 +7,8 @@ import PocketBaseService from '../services/PocketBaseService';
 
 export class RoomScene extends Phaser.Scene {
   private room!: HouseRoom;
-  private mySim!: Sim;
+  private playerRoom!: HouseRoom;
+  private mySim: Sim | null = null;
   private wasd!: {
     W: Phaser.Input.Keyboard.Key;
     A: Phaser.Input.Keyboard.Key;
@@ -18,8 +19,9 @@ export class RoomScene extends Phaser.Scene {
 
   constructor() { super({ key: 'RoomScene' }); }
 
-  init(data: { room: HouseRoom }): void {
-    this.room = data.room;
+  init(data: { room: HouseRoom; playerRoom: HouseRoom }): void {
+    this.room       = data.room;
+    this.playerRoom = data.playerRoom ?? data.room;
   }
 
   create(): void {
@@ -28,25 +30,38 @@ export class RoomScene extends Phaser.Scene {
     const rd = ROOMS[this.room];
     this.add.image(0, 0, rd.bgKey).setOrigin(0);
 
-    // Sim enters from doorway, walks to default room position
-    this.mySim = new Sim(this, rd.sceneEntry.x, rd.sceneEntry.y, 'sim-violet', 'You');
-    this.mySim.setScale(2.5);
-    this.mySim.walkTo(rd.sceneP1.x, rd.sceneP1.y, false, 900);
+    const inRoom = this.room === this.playerRoom;
 
-    this._buildPoiCards();
+    if (inRoom) {
+      // Sim enters from doorway, walks to default furniture position
+      this.mySim = new Sim(this, rd.sceneEntry.x, rd.sceneEntry.y, 'sim-violet', 'You');
+      this.mySim.setScale(2.5);
+      this.mySim.walkTo(rd.sceneP1.x, rd.sceneP1.y, false, 900);
+    } else {
+      // Viewing a room you're not in — show a small label
+      this.add.text(480, 22, `Viewing: ${this.room.replace('_', ' ')}`, {
+        fontSize: '13px', color: '#5C6B85', fontFamily: 'ui-monospace, monospace',
+      }).setOrigin(0.5).setDepth(10);
+    }
+
+    this._buildPoiCards(inRoom);
     this._buildExitButton();
 
-    this.wasd = {
-      W: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W),
-      A: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A),
-      S: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S),
-      D: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D),
-    };
+    if (inRoom) {
+      this.wasd = {
+        W: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+        A: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+        S: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+        D: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+      };
+    }
 
     this.input.keyboard!.on('keydown-ESC', () => this._exitRoom());
   }
 
   update(): void {
+    if (!this.mySim || !this.wasd) return;
+
     const speed = 3;
     let dx = 0, dy = 0;
     if (this.wasd.A?.isDown) dx -= speed;
@@ -65,12 +80,12 @@ export class RoomScene extends Phaser.Scene {
     this.wasMoving = moving;
   }
 
-  private _buildPoiCards(): void {
+  private _buildPoiCards(interactive: boolean): void {
     const pois = ROOM_POIS[this.room] ?? [];
     for (const poi of pois) {
       const def = ACTIVITIES[poi.activityId];
       if (!def) continue;
-      this._createCard(poi.x, poi.y, poi.cardTitle, poi.cardIcon, poi.cardColor, poi.activityId);
+      this._createCard(poi.x, poi.y, poi.cardTitle, poi.cardIcon, poi.cardColor, poi.activityId, interactive);
     }
   }
 
@@ -78,6 +93,7 @@ export class RoomScene extends Phaser.Scene {
     poiX: number, poiY: number,
     title: string, icon: string, color: number,
     activityId: string,
+    interactive: boolean,
   ): void {
     const cardW = 196, cardH = 52;
     const cardX = poiX, cardY = poiY - 100;
@@ -127,13 +143,22 @@ export class RoomScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    bg.on('pointerover', () => { drawBg(true); this.game.canvas.style.cursor = 'pointer'; });
-    bg.on('pointerout',  () => { drawBg(false); this.game.canvas.style.cursor = ''; });
-    bg.on('pointerdown', () => {
-      this.game.canvas.style.cursor = '';
-      PocketBaseService.publishActivity(activityId, null);
-      this.scene.start(ACTIVITIES[activityId].selfSceneKey, { returnRoom: this.room });
-    });
+    if (interactive) {
+      bg.on('pointerover', () => { drawBg(true); this.game.canvas.style.cursor = 'pointer'; });
+      bg.on('pointerout',  () => { drawBg(false); this.game.canvas.style.cursor = ''; });
+      bg.on('pointerdown', () => {
+        this.game.canvas.style.cursor = '';
+        PocketBaseService.publishActivity(activityId, null);
+        this.scene.start(ACTIVITIES[activityId].selfSceneKey, { returnRoom: this.room, playerRoom: this.playerRoom });
+      });
+    } else {
+      // Dim the card and show a hint
+      lbl.setAlpha(0.4);
+      bg.setAlpha(0.4);
+      this.add.text(cardX, cardY + cardH / 2 + 14, 'navigate here to play', {
+        fontSize: '11px', color: '#5C6B85', fontFamily: 'ui-monospace, monospace',
+      }).setOrigin(0.5);
+    }
   }
 
   private _buildExitButton(): void {
