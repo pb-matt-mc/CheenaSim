@@ -1,5 +1,5 @@
 import PocketBase from 'pocketbase';
-import type { RoomName } from '../config/rooms';
+import type { LocationName, HouseRoom } from '../config/rooms';
 
 const pb = new PocketBase(import.meta.env.VITE_PB_URL);
 
@@ -52,27 +52,60 @@ class PocketBaseService {
     this.partnerRecordId = partnerPos['id'] as string;
   }
 
-  async loadInitialPositions(): Promise<{ myRoom: RoomName; partnerRoom: RoomName }> {
+  async loadInitialPositions(): Promise<{
+    myRoom: LocationName; partnerRoom: LocationName;
+    myActivity: string | null; partnerActivity: string | null;
+    myActivityState: string | null; partnerActivityState: string | null;
+  }> {
     const [myPos, partnerPos] = await Promise.all([
       pb.collection('positions').getOne(this.myRecordId!),
       pb.collection('positions').getOne(this.partnerRecordId!),
     ]);
     return {
-      myRoom: myPos['room'] as RoomName,
-      partnerRoom: partnerPos['room'] as RoomName,
+      myRoom:               myPos['room'] as LocationName,
+      partnerRoom:          partnerPos['room'] as LocationName,
+      myActivity:           (myPos['activity'] as string) || null,
+      partnerActivity:      (partnerPos['activity'] as string) || null,
+      myActivityState:      (myPos['activity_state'] as string) || null,
+      partnerActivityState: (partnerPos['activity_state'] as string) || null,
     };
   }
 
-  async publishPosition(room: RoomName, source: 'digital' | 'physical'): Promise<void> {
+  async publishPosition(room: LocationName, source: 'digital' | 'physical'): Promise<void> {
     if (!this.myRecordId) return;
     await pb.collection('positions').update(this.myRecordId, { room, source });
   }
 
-  async subscribeToPartner(cb: (room: RoomName) => void): Promise<void> {
+  async publishActivity(activityId: string | null, state: string | null): Promise<void> {
+    if (!this.myRecordId) return;
+    await pb.collection('positions').update(this.myRecordId, {
+      activity:       activityId,
+      activity_state: state,
+    });
+  }
+
+  async subscribeToPartner(cb: (payload: {
+    room: LocationName;
+    activity: string | null;
+    activity_state: string | null;
+  }) => void): Promise<void> {
     if (!this.partnerRecordId) return;
     await pb.collection('positions').subscribe(this.partnerRecordId, (e) => {
-      cb(e.record['room'] as RoomName);
+      cb({
+        room:           e.record['room'] as LocationName,
+        activity:       (e.record['activity'] as string) || null,
+        activity_state: (e.record['activity_state'] as string) || null,
+      });
     });
+  }
+
+  // Convenience: update only activity fields without changing room
+  async clearActivity(): Promise<void> {
+    await this.publishActivity(null, null);
+  }
+
+  isHouseRoom(loc: LocationName): loc is HouseRoom {
+    return loc !== 'work';
   }
 
   async unsubscribeAll(): Promise<void> {

@@ -130,6 +130,53 @@
     @media (prefers-reduced-motion: reduce) {
       #login-box { animation: none; }
     }
+
+    /* ── POI overlay ── */
+    #poi-overlay {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      flex-direction: row;
+      gap: 10px;
+      z-index: 50;
+      pointer-events: all;
+    }
+
+    .poi-btn {
+      background: rgba(21, 18, 32, 0.92);
+      border: 1px solid rgba(155, 89, 182, 0.5);
+      color: var(--text);
+      padding: 9px 18px;
+      border-radius: 20px;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: border-color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+
+    .poi-btn:hover {
+      border-color: var(--violet);
+      background: rgba(155, 89, 182, 0.18);
+    }
+
+    .poi-btn.poi-violet {
+      border-color: rgba(155, 89, 182, 0.6);
+    }
+
+    .poi-btn.poi-stop {
+      border-color: rgba(224, 99, 122, 0.4);
+      color: #e0637a;
+    }
+
+    .poi-btn.poi-stop:hover {
+      border-color: #e0637a;
+      background: rgba(224, 99, 122, 0.12);
+    }
   </style>
 </head>
 <body>
