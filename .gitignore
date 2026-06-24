@@ -1,6 +1,9 @@
 passkey
 passkey.pub
 digital-world/.env.local
+digital-world/node_modules/
+digital-world/dist/
+digital-world/package-lock.json
 pb_data/
 *.zip
 .bash_history
