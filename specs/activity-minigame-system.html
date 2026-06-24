@@ -218,10 +218,10 @@
 
       <h4>4.2. TypeScript Type Definitions</h4>
       <ul class="checklist">
-        <li><code class="status">[]</code> In <code>src/config/rooms.ts</code>: rename <code>RoomName</code> to <code>HouseRoom</code>, add <code>'work'</code> as a separate union <code>LocationName = HouseRoom | 'work'</code></li>
-        <li><code class="status">[]</code> Update <code>PocketBaseService</code>: <code>publishPosition(location: LocationName, source)</code> — keep existing signature shape; add <code>publishActivity(activityId: string | null, state: string | null): Promise&lt;void&gt;</code></li>
-        <li><code class="status">[]</code> Update <code>subscribeToPartner</code> callback payload type: <code>{ room: LocationName; activity: string | null; activity_state: string | null }</code></li>
-        <li><code class="status">[]</code> Update <code>loadInitialPositions()</code> to return activity + activity_state fields alongside room</li>
+        <li><code class="status">[x]</code> In <code>src/config/rooms.ts</code>: rename <code>RoomName</code> to <code>HouseRoom</code>, add <code>'work'</code> as a separate union <code>LocationName = HouseRoom | 'work'</code></li>
+        <li><code class="status">[x]</code> Update <code>PocketBaseService</code>: <code>publishPosition(location: LocationName, source)</code> — keep existing signature shape; add <code>publishActivity(activityId: string | null, state: string | null): Promise&lt;void&gt;</code></li>
+        <li><code class="status">[x]</code> Update <code>subscribeToPartner</code> callback payload type: <code>{ room: LocationName; activity: string | null; activity_state: string | null }</code></li>
+        <li><code class="status">[x]</code> Update <code>loadInitialPositions()</code> to return activity + activity_state fields alongside room</li>
       </ul>
 
       <h4>4.3. Testing Strategy</h4>
@@ -229,14 +229,14 @@
       <ul class="checklist">
         <li><code class="status">[]</code> Via Admin UI: edit a positions record, set <code>activity = "test"</code>, <code>activity_state = "running"</code> → save → confirm saved</li>
         <li><code class="status">[]</code> Via REST: <code>PATCH /api/collections/positions/records/&lt;id&gt;</code> with <code>{"activity":null,"activity_state":null}</code> → confirm 200 and fields cleared</li>
-        <li><code class="status">[]</code> <code>npm run build</code> — TypeScript compiles cleanly with new types</li>
+        <li><code class="status">[x]</code> <code>npm run build</code> — TypeScript compiles cleanly with new types</li>
       </ul>
       <div class="loop">🔁 Do not proceed until schema fields exist and TypeScript build passes.</div>
     </div>
 
     <!-- ── PHASE 5 ── -->
     <div class="phase">
-      <h3><code class="status">[]</code> Phase 5: Animation System</h3>
+      <h3><code class="status">[wip]</code> Phase 5: Animation System</h3>
       <p>Build the <code>AnimationPlayer</code> and the room-enter animation config. This is the engine that will drive all multi-step sim animations on both the player's and partner's screens.</p>
 
       <figure>
@@ -256,8 +256,8 @@
 <span class="tok-k">export type</span> <span class="tok-f">AnimSequence</span> = <span class="tok-f">AnimStep</span>[];
 </code></pre>
       <ul class="checklist">
-        <li><code class="status">[]</code> Create file with <code>AnimStep</code> and <code>AnimSequence</code> types</li>
-        <li><code class="status">[]</code> Define <code>ROOM_ENTER_ANIMS: Record&lt;HouseRoom, AnimSequence&gt;</code> with enter sequences for all 6 rooms:
+        <li><code class="status">[x]</code> Create file with <code>AnimStep</code> and <code>AnimSequence</code> types</li>
+        <li><code class="status">[x]</code> Define <code>ROOM_ENTER_ANIMS: Record&lt;HouseRoom, AnimSequence&gt;</code> with enter sequences for all 6 rooms:
           <ul>
             <li><code>living_room</code>: walk to room center (800ms) → <code>sit_couch</code> pose (500ms) → <code>idle_sitting</code> (loop)</li>
             <li><code>bedroom</code>: walk to room center (800ms) → <code>idle_standing</code> (loop)</li>
@@ -296,17 +296,17 @@
 }
 </code></pre>
       <ul class="checklist">
-        <li><code class="status">[]</code> Implement <code>AnimationPlayer</code> as above</li>
-        <li><code class="status">[]</code> Add <code>playAnim(key: string)</code> to <code>Sim.ts</code> — calls <code>sprite.play(key, true)</code> (ignoreIfPlaying = true)</li>
-        <li><code class="status">[]</code> Add sprite animation definitions to <code>BootScene.ts</code> for: <code>sit_couch</code>, <code>idle_sitting</code>, <code>sit_desk</code>, <code>idle_standing</code> — initially aliased to existing idle frames until new sprite art is created</li>
+        <li><code class="status">[x]</code> Implement <code>AnimationPlayer</code> as above</li>
+        <li><code class="status">[x]</code> Add <code>playAnim(key: string)</code> to <code>Sim.ts</code> — calls <code>sprite.play(key, true)</code> (ignoreIfPlaying = true)</li>
+        <li><code class="status">[x]</code> Add sprite animation definitions to <code>BootScene.ts</code> for: <code>sit_couch</code>, <code>idle_sitting</code>, <code>sit_desk</code>, <code>idle_standing</code> — initially aliased to existing idle frames until new sprite art is created</li>
       </ul>
 
       <h4>5.3. Partner Animation Rendering</h4>
       <ul class="checklist">
-        <li><code class="status">[]</code> In <code>HomeScene.ts</code>: create a <code>partnerAnimPlayer = new AnimationPlayer(this, this.partnerSim)</code></li>
-        <li><code class="status">[]</code> When partner's room changes (realtime event): call <code>partnerAnimPlayer.play(ROOM_ENTER_ANIMS[newRoom])</code></li>
-        <li><code class="status">[]</code> When partner's activity changes: look up <code>ACTIVITIES[activityId].partnerAnim</code> → call <code>partnerAnimPlayer.play(partnerAnim)</code></li>
-        <li><code class="status">[]</code> When partner's activity clears (null): resume <code>ROOM_ENTER_ANIMS</code> idle loop for current room</li>
+        <li><code class="status">[x]</code> In <code>HomeScene.ts</code>: create a <code>partnerAnimPlayer = new AnimationPlayer(this, this.partnerSim)</code></li>
+        <li><code class="status">[x]</code> When partner's room changes (realtime event): call <code>partnerAnimPlayer.play(ROOM_ENTER_ANIMS[newRoom])</code></li>
+        <li><code class="status">[x]</code> When partner's activity changes: look up <code>ACTIVITIES[activityId].partnerAnim</code> → call <code>partnerAnimPlayer.play(partnerAnim)</code></li>
+        <li><code class="status">[x]</code> When partner's activity clears (null): resume <code>ROOM_ENTER_ANIMS</code> idle loop for current room</li>
       </ul>
 
       <h4>5.4. Testing Strategy</h4>
@@ -314,14 +314,14 @@
         <li><code class="status">[]</code> Open two browser tabs, log in as user-a and user-b</li>
         <li><code class="status">[]</code> In Tab A's browser console: <code>PocketBaseService.publishPosition('living_room', 'digital')</code> → Tab B should show walk-in → sit → idle sequence on partner sim within 3s</li>
         <li><code class="status">[]</code> Confirm <code>AnimationPlayer.stop()</code> properly cancels the previous sequence when a new room event arrives mid-animation</li>
-        <li><code class="status">[]</code> <code>npm run build</code> exits 0</li>
+        <li><code class="status">[x]</code> <code>npm run build</code> exits 0</li>
       </ul>
       <div class="loop">🔁 Do not proceed until partner sim plays multi-step room-enter animations reliably.</div>
     </div>
 
     <!-- ── PHASE 6 ── -->
     <div class="phase">
-      <h3><code class="status">[]</code> Phase 6: Activity Registry &amp; Mini-game System</h3>
+      <h3><code class="status">[wip]</code> Phase 6: Activity Registry &amp; Mini-game System</h3>
       <p>Build the config-driven activity registry, the POI overlay UI, and the first mini-game (Magazine Mayhem). After this phase, adding a new mini-game requires only a config entry + a new Phaser Scene file.</p>
 
       <figure>
@@ -359,39 +359,39 @@
 };
 </code></pre>
       <ul class="checklist">
-        <li><code class="status">[]</code> Create <code>src/config/activities.ts</code> with <code>ActivityDef</code> interface and <code>ACTIVITIES</code> map containing <code>magazine_mayhem</code></li>
-        <li><code class="status">[]</code> Ensure <code>ACTIVITIES</code> is a plain object (not a class) so it can be iterated with <code>Object.values()</code></li>
+        <li><code class="status">[x]</code> Create <code>src/config/activities.ts</code> with <code>ActivityDef</code> interface and <code>ACTIVITIES</code> map containing <code>magazine_mayhem</code></li>
+        <li><code class="status">[x]</code> Ensure <code>ACTIVITIES</code> is a plain object (not a class) so it can be iterated with <code>Object.values()</code></li>
       </ul>
 
       <h4>6.2. PoiOverlay — DOM-based POI Buttons</h4>
       <p>Create <code>src/ui/PoiOverlay.ts</code>. This is a DOM panel that sits over the Phaser canvas, not a Phaser GameObject. This keeps POI buttons trivially styleable with CSS.</p>
       <ul class="checklist">
-        <li><code class="status">[]</code> <code>PoiOverlay</code> class: constructor takes a container element; exposes <code>showForRoom(room: HouseRoom)</code> and <code>hide()</code></li>
-        <li><code class="status">[]</code> <code>showForRoom</code>: filters <code>Object.values(ACTIVITIES)</code> to those whose <code>rooms</code> includes the current room; renders one button per match</li>
-        <li><code class="status">[]</code> Each button shows <code>activity.icon + ' ' + activity.label</code>; clicking emits a custom DOM event <code>cheena:start-activity</code> with <code>detail: { activityId }</code></li>
-        <li><code class="status">[]</code> Add a "✕ Stop" button that emits <code>cheena:stop-activity</code> (clears current activity, returns to room idle)</li>
-        <li><code class="status">[]</code> Add minimal CSS in <code>index.html</code>: <code>#poi-overlay</code> — fixed bottom strip above canvas, flex row of pills, styled with violet/cyan palette</li>
+        <li><code class="status">[x]</code> <code>PoiOverlay</code> class: constructor takes a container element; exposes <code>showForRoom(room: HouseRoom)</code> and <code>hide()</code></li>
+        <li><code class="status">[x]</code> <code>showForRoom</code>: filters <code>Object.values(ACTIVITIES)</code> to those whose <code>rooms</code> includes the current room; renders one button per match</li>
+        <li><code class="status">[x]</code> Each button shows <code>activity.icon + ' ' + activity.label</code>; clicking emits a custom DOM event <code>cheena:start-activity</code> with <code>detail: { activityId }</code></li>
+        <li><code class="status">[x]</code> Add a "✕ Stop" button that emits <code>cheena:stop-activity</code> (clears current activity, returns to room idle)</li>
+        <li><code class="status">[x]</code> Add minimal CSS in <code>index.html</code>: <code>#poi-overlay</code> — fixed bottom strip above canvas, flex row of pills, styled with violet/cyan palette</li>
       </ul>
 
       <h4>6.3. ActivitySystem — Wiring</h4>
       <p>Create <code>src/systems/ActivitySystem.ts</code>:</p>
       <ul class="checklist">
-        <li><code class="status">[]</code> Constructor: takes Phaser Game instance, PoiOverlay, PocketBaseService, scene manager reference</li>
-        <li><code class="status">[]</code> <code>onRoomChange(newRoom: LocationName)</code>: if house room → call <code>poiOverlay.showForRoom(newRoom)</code>; if <code>'work'</code> → hide overlay, publish <code>activity_state: 'driving'</code>, start DrivingScene</li>
-        <li><code class="status">[]</code> Listen for DOM <code>cheena:start-activity</code>: publish <code>activity = activityId</code> to PocketBase; call <code>game.scene.start(activityDef.selfSceneKey)</code></li>
-        <li><code class="status">[]</code> Listen for DOM <code>cheena:stop-activity</code>: publish <code>activity = null, activity_state = null</code>; return to HomeScene (restart or resume)</li>
-        <li><code class="status">[]</code> Integrate <code>ActivitySystem</code> into <code>HomeScene.create()</code></li>
+        <li><code class="status">[x]</code> Constructor: takes Phaser Game instance, PoiOverlay, PocketBaseService, scene manager reference</li>
+        <li><code class="status">[x]</code> <code>onRoomChange(newRoom: LocationName)</code>: if house room → call <code>poiOverlay.showForRoom(newRoom)</code>; if <code>'work'</code> → hide overlay, publish <code>activity_state: 'driving'</code>, start DrivingScene</li>
+        <li><code class="status">[x]</code> Listen for DOM <code>cheena:start-activity</code>: publish <code>activity = activityId</code> to PocketBase; call <code>game.scene.start(activityDef.selfSceneKey)</code></li>
+        <li><code class="status">[x]</code> Listen for DOM <code>cheena:stop-activity</code>: publish <code>activity = null, activity_state = null</code>; return to HomeScene (restart or resume)</li>
+        <li><code class="status">[x]</code> Integrate <code>ActivitySystem</code> into <code>HomeScene.create()</code></li>
         <li><code class="status">[]</code> <strong>Remove</strong> the existing <code>pointerdown</code> room-change handler from <code>HomeScene</code>. Room changes are now NFC-only. (Digital click now only triggers POI interactions within a room.)</li>
       </ul>
 
       <h4>6.4. Magazine Mayhem — Example Mini-game Scene</h4>
       <p>Create <code>src/scenes/minigames/MagazineMayhemScene.ts</code>. This scene is intentionally simple — it demonstrates the pattern, not a polished game.</p>
       <ul class="checklist">
-        <li><code class="status">[]</code> Scene key: <code>'MagazineMayhemScene'</code>; registered in <code>main.ts</code> scene array</li>
-        <li><code class="status">[]</code> On <code>create()</code>: fill with a dark background, show "Magazine Mayhem" title, spawn magazine objects that drift across the screen, countdown timer (30s)</li>
-        <li><code class="status">[]</code> Click/tap a magazine → score increments, magazine fades out; new magazine spawns</li>
-        <li><code class="status">[]</code> On timer end: show score, "Back" button → fires <code>cheena:stop-activity</code> → ActivitySystem handles teardown</li>
-        <li><code class="status">[]</code> Scene does NOT manage PocketBase directly; ActivitySystem handles all publish calls</li>
+        <li><code class="status">[x]</code> Scene key: <code>'MagazineMayhemScene'</code>; registered in <code>main.ts</code> scene array</li>
+        <li><code class="status">[x]</code> On <code>create()</code>: fill with a dark background, show "Magazine Mayhem" title, spawn magazine objects that drift across the screen, countdown timer (30s)</li>
+        <li><code class="status">[x]</code> Click/tap a magazine → score increments, magazine fades out; new magazine spawns</li>
+        <li><code class="status">[x]</code> On timer end: show score, "Back" button → fires <code>cheena:stop-activity</code> → ActivitySystem handles teardown</li>
+        <li><code class="status">[x]</code> Scene does NOT manage PocketBase directly; ActivitySystem handles all publish calls</li>
       </ul>
 
       <h4>6.5. Testing Strategy</h4>
@@ -401,14 +401,14 @@
         <li><code class="status">[]</code> Tab B (user-b): partner sim plays <code>reading_magazine</code> animation loop within 3s of Tab A starting the game</li>
         <li><code class="status">[]</code> Click "✕ Stop" in Tab A → activity clears; Tab B reverts to room idle animation</li>
         <li><code class="status">[]</code> Add a second dummy activity entry to <code>ACTIVITIES</code> for a different room, verify its button appears only in that room without any code changes beyond the config</li>
-        <li><code class="status">[]</code> <code>npm run build</code> exits 0</li>
+        <li><code class="status">[x]</code> <code>npm run build</code> exits 0</li>
       </ul>
       <div class="loop">🔁 Do not proceed until both the POI system and partner animation propagation are confirmed working end-to-end.</div>
     </div>
 
     <!-- ── PHASE 7 ── -->
     <div class="phase">
-      <h3><code class="status">[]</code> Phase 7: Work Location &amp; Driving Sequence</h3>
+      <h3><code class="status">[wip]</code> Phase 7: Work Location &amp; Driving Sequence</h3>
       <p>Add the 7th NFC chip for "going to work". When activated, the player's screen shows a full-screen driving animation; the partner's screen shows them commuting. An "Arrived" button ends the commute and transitions both screens to the "at work" state.</p>
 
       <figure>
@@ -427,38 +427,38 @@
       <h4>7.2. DrivingScene</h4>
       <p>This scene runs on the player's own screen during the commute. The partner's screen shows a "commuting" animation via the standard activity/partner-anim pipeline.</p>
       <ul class="checklist">
-        <li><code class="status">[]</code> Scene key: <code>'DrivingScene'</code>; registered in <code>main.ts</code></li>
+        <li><code class="status">[x]</code> Scene key: <code>'DrivingScene'</code>; registered in <code>main.ts</code></li>
         <li><code class="status">[]</code> Assets: <code>driving-bg.png</code> — a 960×640 horizontal road scene (or tileSprite for scrolling effect); generate with Python/PIL or draw programmatically</li>
-        <li><code class="status">[]</code> <code>create()</code>: add scrolling road <code>tileSprite</code>, a static car sprite (or re-use sim sprite with <code>'driving'</code> anim frame), dark overlay with "Commuting to work…" text</li>
-        <li><code class="status">[]</code> Road scrolls at constant speed using <code>update()</code> → <code>tileSprite.tilePositionX += 4</code></li>
-        <li><code class="status">[]</code> "Arrived at Work" button (DOM, styled like sign-in button): clicking fires <code>cheena:work-arrived</code> DOM event</li>
-        <li><code class="status">[]</code> Scene does NOT publish to PocketBase — ActivitySystem handles that</li>
+        <li><code class="status">[x]</code> <code>create()</code>: add scrolling road <code>tileSprite</code>, a static car sprite (or re-use sim sprite with <code>'driving'</code> anim frame), dark overlay with "Commuting to work…" text</li>
+        <li><code class="status">[x]</code> Road scrolls at constant speed using <code>update()</code> → <code>tileSprite.tilePositionX += 4</code></li>
+        <li><code class="status">[x]</code> "Arrived at Work" button (DOM, styled like sign-in button): clicking fires <code>cheena:work-arrived</code> DOM event</li>
+        <li><code class="status">[x]</code> Scene does NOT publish to PocketBase — ActivitySystem handles that</li>
       </ul>
 
       <h4>7.3. WorkScene</h4>
       <ul class="checklist">
-        <li><code class="status">[]</code> Scene key: <code>'WorkScene'</code>; registered in <code>main.ts</code></li>
+        <li><code class="status">[x]</code> Scene key: <code>'WorkScene'</code>; registered in <code>main.ts</code></li>
         <li><code class="status">[]</code> Assets: <code>work-bg.png</code> — simple top-down desk/office environment; generate programmatically matching house pixel-art palette</li>
-        <li><code class="status">[]</code> <code>create()</code>: render work background; place player's sim at desk with <code>idle_sitting</code> anim; show small "Leave Work" button</li>
-        <li><code class="status">[]</code> "Leave Work" button: fires <code>cheena:leave-work</code> DOM event → ActivitySystem clears <code>activity_state</code>, publishes <code>room: 'garden'</code> (returning home fallback) and stops WorkScene → HomeScene restarts</li>
+        <li><code class="status">[x]</code> <code>create()</code>: render work background; place player's sim at desk with <code>idle_sitting</code> anim; show small "Leave Work" button</li>
+        <li><code class="status">[x]</code> "Leave Work" button: fires <code>cheena:leave-work</code> DOM event → ActivitySystem clears <code>activity_state</code>, publishes <code>room: 'garden'</code> (returning home fallback) and stops WorkScene → HomeScene restarts</li>
       </ul>
 
       <h4>7.4. ActivitySystem: Work Location Handling</h4>
       <ul class="checklist">
-        <li><code class="status">[]</code> In <code>ActivitySystem.onRoomChange('work')</code>:
+        <li><code class="status">[x]</code> In <code>ActivitySystem.onRoomChange('work')</code>:
           <ul>
             <li>Publish <code>{ room: 'work', activity: null, activity_state: 'driving' }</code></li>
             <li>Hide POI overlay</li>
             <li>Pause/stop HomeScene → start DrivingScene</li>
           </ul>
         </li>
-        <li><code class="status">[]</code> Listen for <code>cheena:work-arrived</code>:
+        <li><code class="status">[x]</code> Listen for <code>cheena:work-arrived</code>:
           <ul>
             <li>Publish <code>{ activity_state: 'at_work' }</code></li>
             <li>Stop DrivingScene → start WorkScene</li>
           </ul>
         </li>
-        <li><code class="status">[]</code> Listen for <code>cheena:leave-work</code>:
+        <li><code class="status">[x]</code> Listen for <code>cheena:leave-work</code>:
           <ul>
             <li>Publish <code>{ room: 'garden', activity: null, activity_state: null }</code> (firmware will override on next NFC scan)</li>
             <li>Stop WorkScene → start HomeScene</li>
@@ -468,8 +468,8 @@
 
       <h4>7.5. Partner View: Work States</h4>
       <ul class="checklist">
-        <li><code class="status">[]</code> In <code>HomeScene</code>'s partner subscription handler: when <code>activity_state === 'driving'</code> → call <code>partnerAnimPlayer.play(WORK_DRIVING_ANIM)</code> (sim walks to door, disappears, "driving" icon appears)</li>
-        <li><code class="status">[]</code> Define <code>WORK_DRIVING_ANIM</code> in <code>room-enter-anims.ts</code>: walk to garden door (800ms) → fade out (400ms) → show small car emoji label → loop</li>
+        <li><code class="status">[x]</code> In <code>HomeScene</code>'s partner subscription handler: when <code>activity_state === 'driving'</code> → call <code>partnerAnimPlayer.play(WORK_DRIVING_ANIM)</code> (sim walks to door, disappears, "driving" icon appears)</li>
+        <li><code class="status">[x]</code> Define <code>WORK_DRIVING_ANIM</code> in <code>room-enter-anims.ts</code>: walk to garden door (800ms) → fade out (400ms) → show small car emoji label → loop</li>
         <li><code class="status">[]</code> When <code>activity_state === 'at_work'</code> → show a DOM overlay card on partner's screen: "Partner is at work 💼" in bottom-right corner; partner sim hidden</li>
         <li><code class="status">[]</code> When <code>room</code> returns to a house room (leave work) → remove "at work" card; show partner sim room-enter anim</li>
       </ul>
@@ -481,7 +481,7 @@
         <li><code class="status">[]</code> Tab A: click "Arrived at Work" → WorkScene loads; Tab B shows "at work" card</li>
         <li><code class="status">[]</code> Tab A: click "Leave Work" → HomeScene resumes; Tab B shows room-enter anim for garden</li>
         <li><code class="status">[]</code> Firmware: place figurine on 7th reader → serial shows <code>"work"</code>; same flow triggers over real NFC</li>
-        <li><code class="status">[]</code> <code>npm run build</code> exits 0; deploy to GitHub Pages</li>
+        <li><code class="status">[x]</code> <code>npm run build</code> exits 0; deploy to GitHub Pages</li>
       </ul>
       <div class="loop">🔁 Do not exit Phase 7 until the full work commute flow works end-to-end on two browser tabs AND via the physical 7th NFC reader.</div>
     </div>
@@ -491,12 +491,12 @@
   <section id="validation">
     <h2>Validation Commands</h2>
     <ul class="checklist">
-      <li><code class="status">[]</code> <code>npm run build</code> (in <code>digital-world/</code>) — TypeScript clean, Vite bundle produced</li>
+      <li><code class="status">[x]</code> <code>npm run build</code> (in <code>digital-world/</code>) — TypeScript clean, Vite bundle produced</li>
       <li><code class="status">[]</code> Two-tab E2E: login user-a + user-b → user-a enters living_room → user-b sees walk-in + sit + idle sequence</li>
       <li><code class="status">[]</code> Two-tab E2E: user-a starts Magazine Mayhem → user-b sees reading animation loop within 3s</li>
       <li><code class="status">[]</code> Two-tab E2E: user-a publishes <code>work/driving</code> → user-b sees commute anim; user-a clicks Arrived → user-b sees "at work" card</li>
       <li><code class="status">[]</code> Dev sanity: add a throwaway activity to <code>ACTIVITIES</code> config pointing at a dummy scene → it appears in the correct room UI without touching any other file</li>
-      <li><code class="status">[]</code> GitHub Pages deploy succeeds (Actions workflow green)</li>
+      <li><code class="status">[x]</code> GitHub Pages deploy succeeds (Actions workflow green)</li>
     </ul>
     <div class="loop">🔁 The plan is not complete until every box is checked and every flow passes on two real devices.</div>
   </section>
