@@ -56,6 +56,18 @@ export class HomeScene extends Phaser.Scene {
       PocketBaseService.publishPosition(room, 'digital');
       this._navigateToRoom(room);
     });
+
+    const hotkeys: Record<string, HouseRoom> = {
+      ONE: 'bedroom', TWO: 'bathroom', THREE: 'kitchen',
+      FOUR: 'living_room', FIVE: 'garden', SIX: 'study',
+    };
+    for (const [code, room] of Object.entries(hotkeys)) {
+      this.input.keyboard!.on(`keydown-${code}`, () => {
+        if (this._navigating) return;
+        PocketBaseService.publishPosition(room, 'digital');
+        this._navigateToRoom(room);
+      });
+    }
   }
 
   /** Walk sim through the corridor, then fade into RoomScene */
