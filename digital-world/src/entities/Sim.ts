@@ -9,12 +9,14 @@ export class Sim {
     textureKey: string,
     name: string,
   ) {
+    const labelColor = textureKey === 'sim-violet' ? '#b794c8' : '#00c8c8';
+
     this.sprite = scene.add.sprite(x, y, textureKey);
     this.sprite.play(`${textureKey}_idle`);
     this.label = scene.add
       .text(x, y + 28, name, {
         fontSize: '11px',
-        color: '#9AA7BD',
+        color: labelColor,
         fontFamily: 'monospace',
       })
       .setOrigin(0.5);

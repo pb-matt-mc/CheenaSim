@@ -4,51 +4,142 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CheenaSim</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #1a1a2e; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: monospace; }
+
+    :root {
+      --violet: #9b59b6;
+      --cyan:   #00c8c8;
+      --bg:     #0E0C1A;
+      --surface: #151220;
+      --text:   #EAE6F4;
+      --muted:  #6E6880;
+      --border: rgba(155, 89, 182, 0.18);
+    }
+
+    body {
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
     canvas { display: block; }
 
+    /* ── Login overlay ── */
     #login-overlay {
       display: none;
       position: fixed; inset: 0;
-      background: rgba(10,10,20,0.92);
-      align-items: center; justify-content: center;
+      background: rgba(10, 8, 20, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      align-items: center;
+      justify-content: center;
       z-index: 100;
     }
     #login-overlay.visible { display: flex; }
 
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
     #login-box {
-      background: #16213e;
-      border: 1px solid #0f3460;
-      border-radius: 8px;
-      padding: 32px 40px;
-      display: flex; flex-direction: column; gap: 16px;
-      min-width: 300px;
-      color: #e0e0e0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 38px 40px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      width: 312px;
+      position: relative;
+      overflow: hidden;
+      animation: rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
-    #login-box h2 { color: #9b59b6; letter-spacing: 2px; font-size: 1.1rem; }
+
+    /* Violet→cyan hairline — the signature */
+    #login-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--violet), var(--cyan));
+    }
+
+    .login-wordmark {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .login-headline {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.35;
+      margin-bottom: 4px;
+    }
+
     #login-box input {
-      background: #0d1b2a; border: 1px solid #0f3460; color: #e0e0e0;
-      padding: 10px 12px; border-radius: 4px; font-family: monospace; font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      color: var(--text);
+      padding: 10px 13px;
+      border-radius: 8px;
+      font-family: ui-monospace, 'Fira Code', monospace;
+      font-size: 0.85rem;
+      transition: border-color 0.15s;
     }
-    #login-box input:focus { outline: none; border-color: #9b59b6; }
+    #login-box input::placeholder { color: var(--muted); }
+    #login-box input:focus {
+      outline: none;
+      border-color: rgba(155, 89, 182, 0.45);
+    }
+
     #login-btn {
-      background: #9b59b6; color: #fff; border: none;
-      padding: 10px; border-radius: 4px; cursor: pointer;
-      font-family: monospace; font-size: 0.95rem; letter-spacing: 1px;
+      background: linear-gradient(90deg, var(--violet), var(--cyan));
+      color: #fff;
+      border: none;
+      padding: 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      margin-top: 3px;
+      transition: opacity 0.15s;
     }
-    #login-btn:hover { background: #8e44ad; }
-    #login-error { color: #e74c3c; font-size: 0.8rem; display: none; }
+    #login-btn:hover    { opacity: 0.85; }
+    #login-btn:disabled { opacity: 0.45; cursor: default; }
+
+    #login-error {
+      color: #e0637a;
+      font-size: 0.78rem;
+      display: none;
+      min-height: 1rem;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #login-box { animation: none; }
+    }
   </style>
 </head>
 <body>
   <div id="login-overlay">
     <div id="login-box">
-      <h2>CHEENASIM</h2>
-      <input id="login-email" type="email" placeholder="email" autocomplete="username" />
+      <p class="login-wordmark">CheenaSim</p>
+      <p class="login-headline">A shared home,<br>wherever you are.</p>
+      <input id="login-email"    type="email"    placeholder="email"    autocomplete="username" />
       <input id="login-password" type="password" placeholder="password" autocomplete="current-password" />
-      <button id="login-btn">sign in</button>
+      <button id="login-btn">Sign in</button>
       <span id="login-error"></span>
     </div>
   </div>
