@@ -11,7 +11,7 @@ export class Sim {
     textureKey: string,
     name: string,
   ) {
-    const labelColor = textureKey === 'boy' ? '#b794c8' : '#00c8c8';
+    const labelColor = textureKey === 'boy' ? '#00c8c8' : '#b794c8';
 
     this.sprite = scene.add.sprite(x, y, textureKey);
     this.sprite.play(`${textureKey}_idle`);
