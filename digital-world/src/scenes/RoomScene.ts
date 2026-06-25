@@ -37,7 +37,7 @@ export class RoomScene extends Phaser.Scene {
 
     if (inRoom) {
       // Player sim enters from doorway, walks to p1
-      this.mySim = new Sim(this, rd.sceneEntry.x, rd.sceneEntry.y, 'sim-violet', 'You');
+      this.mySim = new Sim(this, rd.sceneEntry.x, rd.sceneEntry.y, 'boy', 'You');
       this.mySim.setScale(2.5);
       this.mySim.walkTo(rd.sceneP1.x, rd.sceneP1.y, false, 900);
     } else {
@@ -50,7 +50,7 @@ export class RoomScene extends Phaser.Scene {
     if (partnerInRoom) {
       // Partner is already in this room — place them at p2 if player is also here, else p1
       const partnerPos = inRoom ? rd.sceneP2 : rd.sceneP1;
-      const partnerSim = new Sim(this, partnerPos.x, partnerPos.y, 'sim-cyan', 'Partner');
+      const partnerSim = new Sim(this, partnerPos.x, partnerPos.y, 'girl', 'Partner');
       partnerSim.setScale(2.5);
       partnerSim.playAnim('idle');
     }

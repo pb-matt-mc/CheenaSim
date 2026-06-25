@@ -8,8 +8,8 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     this.load.image('house', 'assets/house.png');
-    this.load.spritesheet('sim-violet', 'assets/sim-violet.png', { frameWidth: 32, frameHeight: 48 });
-    this.load.spritesheet('sim-cyan',   'assets/sim-cyan.png',   { frameWidth: 32, frameHeight: 48 });
+    this.load.spritesheet('boy',  'assets/boy.png',  { frameWidth: 64, frameHeight: 64 });
+    this.load.spritesheet('girl', 'assets/girl.png', { frameWidth: 64, frameHeight: 64 });
     // Room plate backgrounds (core rooms loaded at boot; work+driving lazy-loaded via PreloadScene)
     this.load.image('rooms/bedroom-bg',     'assets/rooms/bedroom-bg.png');
     this.load.image('rooms/bathroom-bg',    'assets/rooms/bathroom-bg.png');
@@ -22,8 +22,8 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    this._createAnims('sim-violet');
-    this._createAnims('sim-cyan');
+    this._createIdleAnim('boy');
+    this._createIdleAnim('girl');
 
     if (PocketBaseService.isLoggedIn()) {
       PocketBaseService.restoreSession().then((ok) => {
@@ -38,25 +38,13 @@ export class BootScene extends Phaser.Scene {
     }
   }
 
-  private _createAnims(key: string): void {
-    const defs = [
-      { suffix: '_idle',             start:  0, end:  3, rate: 4, repeat: -1 },
-      { suffix: '_walk',             start:  4, end:  7, rate: 8, repeat: -1 },
-      { suffix: '_sit_couch',        start:  8, end: 10, rate: 6, repeat:  0 },
-      { suffix: '_idle_sitting',     start: 11, end: 12, rate: 2, repeat: -1 },
-      { suffix: '_sit_desk',         start: 13, end: 15, rate: 6, repeat:  0 },
-      { suffix: '_reading_magazine', start: 16, end: 19, rate: 4, repeat: -1 },
-      { suffix: '_driving',          start: 20, end: 21, rate: 4, repeat: -1 },
-    ] as const;
-
-    for (const d of defs) {
-      this.anims.create({
-        key:       `${key}${d.suffix}`,
-        frames:    this.anims.generateFrameNumbers(key, { start: d.start, end: d.end }),
-        frameRate: d.rate,
-        repeat:    d.repeat,
-      });
-    }
+  private _createIdleAnim(key: string): void {
+    this.anims.create({
+      key:       `${key}_idle`,
+      frames:    this.anims.generateFrameNumbers(key, { start: 0, end: 0 }),
+      frameRate: 1,
+      repeat:    -1,
+    });
   }
 
   private _showLogin(): void {

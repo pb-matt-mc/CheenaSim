@@ -11,7 +11,7 @@ export class Sim {
     textureKey: string,
     name: string,
   ) {
-    const labelColor = textureKey === 'sim-violet' ? '#b794c8' : '#00c8c8';
+    const labelColor = textureKey === 'boy' ? '#b794c8' : '#00c8c8';
 
     this.sprite = scene.add.sprite(x, y, textureKey);
     this.sprite.play(`${textureKey}_idle`);
@@ -25,8 +25,7 @@ export class Sim {
   }
 
   private get _labelOffsetY(): number {
-    // Half the frame height (24px) × scale, plus a 4px gap
-    return 24 * this._scale + 4;
+    return 32 * this._scale + 4;
   }
 
   walkTo(x: number, y: number, skipIdleOnComplete = false, duration = 700, onComplete?: () => void): void {

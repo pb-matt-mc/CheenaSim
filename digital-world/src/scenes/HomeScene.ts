@@ -23,8 +23,8 @@ export class HomeScene extends Phaser.Scene {
     this.add.image(0, 0, 'house').setOrigin(0);
 
     const start = ROOMS.living_room;
-    this.mySim      = new Sim(this, start.p1.x, start.p1.y, 'sim-violet', 'You');
-    this.partnerSim = new Sim(this, start.p2.x, start.p2.y, 'sim-cyan',   'Partner');
+    this.mySim      = new Sim(this, start.p1.x, start.p1.y, 'boy',  'You');
+    this.partnerSim = new Sim(this, start.p2.x, start.p2.y, 'girl', 'Partner');
 
     this.partnerAnimPlayer = new AnimationPlayer(this, this.partnerSim);
     this.activitySystem    = new ActivitySystem(this);
