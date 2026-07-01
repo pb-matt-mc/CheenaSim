@@ -418,7 +418,12 @@ pickerEl.addEventListener('click', (e) => {
   if (e.target === pickerEl) pickerEl.classList.add('hidden');
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') pickerEl.classList.add('hidden');
+  if (e.key !== 'Escape') return;
+  if (!pickerEl.classList.contains('hidden')) {
+    pickerEl.classList.add('hidden');
+    return;
+  }
+  window.parent?.postMessage({ type: 'MINIGAME_END', result: { won: false, score: 0 } }, '*');
 });
 
 // ── Spawn letter → PocketBase ────────────────────────────────────────────
