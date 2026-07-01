@@ -32,6 +32,8 @@ export class BootScene extends Phaser.Scene {
         } else {
           this._showLogin();
         }
+      }).catch(() => {
+        this._showLogin();
       });
     } else {
       this._showLogin();
