@@ -6,6 +6,7 @@ import { PreloadScene } from './scenes/PreloadScene';
 import { DrivingScene } from './scenes/DrivingScene';
 import { WorkScene } from './scenes/WorkScene';
 import { MagazineMayhemScene } from './scenes/minigames/MagazineMayhemScene';
+import { FridgeBoardScene } from './scenes/minigames/FridgeBoardScene';
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -13,7 +14,7 @@ new Phaser.Game({
   height: 640,
   backgroundColor: '#1a1a2e',
   pixelArt: true,
-  scene: [BootScene, PreloadScene, HomeScene, RoomScene, DrivingScene, WorkScene, MagazineMayhemScene],
+  scene: [BootScene, PreloadScene, HomeScene, RoomScene, DrivingScene, WorkScene, MagazineMayhemScene, FridgeBoardScene],
   parent: document.body,
   scale: {
     mode: Phaser.Scale.FIT,

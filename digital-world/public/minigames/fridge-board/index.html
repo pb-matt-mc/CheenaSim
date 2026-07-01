@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Fridge Board</title>
+<script src="https://unpkg.com/pocketbase/dist/pocketbase.umd.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #f0ebe0;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* ── Fridge background ────────────────────────────── */
+  #fridge-bg {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 100vh;
+    width: auto;
+    max-width: 100vw;
+    object-fit: contain;
+    z-index: 0;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* ── Magnets layer ────────────────────────────────── */
+  #magnets-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+  }
+
+  /* ── ABC magnet ───────────────────────────────────── */
+  #abc-magnet {
+    position: absolute;
+    height: 4vh;
+    width: auto;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.45));
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.12s, filter 0.12s;
+    z-index: 5;
+  }
+  #abc-magnet:hover  { transform: scale(1.07); filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5)); }
+  #abc-magnet:active { transform: scale(0.96); }
+
+  /* ── Trash magnet ──────────────────────────────────── */
+  #trash-magnet {
+    position: absolute;
+    width: 5.6vh;
+    height: 5.6vh;
+    z-index: 5;
+    pointer-events: auto;
+    transition: transform 0.12s, filter 0.12s;
+  }
+  #trash-magnet:hover { transform: scale(1.07); filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5)); }
+  #trash-magnet.drag-over { transform: scale(1.07); filter: drop-shadow(0 0 6px #e53e3e); }
+  #trash-magnet img { width: 100%; height: 100%; display: block; object-fit: contain; }
+
+  /* ── Letter magnets (canvas elements) ────────────── */
+  .letter-magnet {
+    position: absolute;
+    display: block;
+    width: 4vh;
+    height: 4vh;
+    cursor: grab;
+    user-select: none;
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.28));
+    transition: filter 0.12s, transform 0.12s;
+    will-change: transform;
+  }
+  .letter-magnet:hover {
+    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.38));
+  }
+  .letter-magnet.dragging {
+    cursor: grabbing;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.45));
+    transform: scale(1.1) rotate(-2deg);
+    transition: none;
+    z-index: 9999 !important;
+  }
+
+  /* ── Picker overlay ───────────────────────────────── */
+  #picker {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgba(0,0,0,0.38);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  #picker.hidden { display: none; }
+
+  #picker-panel {
+    background: rgba(15, 15, 15, 0.80);
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    padding: 20px 22px;
+    display: grid;
+    grid-template-columns: repeat(7, 65px);
+    gap: 8px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .picker-cell {
+    display: block;
+    width: 65px;
+    height: 65px;
+    cursor: pointer;
+    border-radius: 6px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+    transition: transform 0.1s, filter 0.1s;
+  }
+  .picker-cell:hover {
+    transform: scale(1.12);
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+  }
+  .picker-cell.empty { visibility: hidden; cursor: default; }
+
+  /* ── Loading / error overlay ──────────────────────── */
+  #loading {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(240, 235, 224, 0.92);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-family: Georgia, serif;
+    font-size: 18px;
+    color: #555;
+  }
+  #loading.hidden { display: none; }
+  #loading small { font-size: 13px; color: #888; font-family: monospace; }
+
+  #hitbox-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    pointer-events: none;
+    overflow: visible;
+  }
+  #hitbox-overlay .hitbox {
+    pointer-events: all;
+    cursor: pointer;
+  }
+
+  @keyframes handle-wiggle {
+    0%   { transform: rotate(0deg); }
+    12%  { transform: rotate(22deg); }
+    28%  { transform: rotate(-16deg); }
+    42%  { transform: rotate(11deg); }
+    55%  { transform: rotate(-7deg); }
+    67%  { transform: rotate(4deg); }
+    77%  { transform: rotate(-2deg); }
+    86%  { transform: rotate(1deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  #handle-anim-group {
+    /* transform-origin set dynamically by updateLayout() */
+  }
+  #handle-anim-group.wiggling {
+    animation: handle-wiggle 0.7s ease-out forwards;
+  }
+
+</style>
+</head>
+<body>
+
+<svg id="hitbox-overlay" xmlns="http://www.w3.org/2000/svg">
+  <!-- Animated group: clip + fridge texture rotate together around handle center -->
+  <g id="handle-anim-group">
+    <defs>
+      <clipPath id="handle-clip">
+        <rect id="hc-sq"/>
+        <polygon id="hc-trap"/>
+      </clipPath>
+    </defs>
+    <image id="handle-fridge-layer" href="assets/fridge with bg.png"
+           x="0" y="0" width="0" height="0"
+           preserveAspectRatio="none"
+           clip-path="url(#handle-clip)"/>
+  </g>
+  <!-- Fixed hitbox — not animated so clicking is always reliable -->
+  <g class="hitbox" id="handle-hitbox" fill="transparent" stroke="none">
+    <rect id="hh-sq"/>
+    <polygon id="hh-trap"/>
+  </g>
+</svg>
+
+<!-- Loading screen -->
+<div id="loading">
+  <span>Loading fridge…</span>
+  <small id="loading-detail"></small>
+</div>
+
+<!-- Fridge surface -->
+<img id="fridge-bg" src="assets/fridge clean.png" alt="">
+
+<div id="magnets-layer">
+
+  <!-- Trash magnet — top left, drag target only -->
+  <div id="trash-magnet">
+    <img src="assets/trash.png" alt="trash">
+  </div>
+
+  <!-- ABC magnet — top right -->
+  <img id="abc-magnet" src="assets/ABC's.png" alt="Add a letter">
+
+</div>
+
+<!-- Letter picker -->
+<div id="picker" class="hidden">
+  <div id="picker-panel"></div>
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────
+const PB_URL     = 'http://minecraftserver:8091';
+const COLLECTION = 'fridge_magnets';
+
+// ── Sprite sheet constants ───────────────────────────────────────────────
+// Sheet: 591 × 422 px, 7 cols × 5 rows (col 6 is thinner, all rows equal)
+const SHEET_W   = 591;
+const SHEET_H   = 422;
+const GRID_COLS = 7;
+const GRID_ROWS = 5;
+const CELL_W    = SHEET_W / GRID_COLS;  // 84.4286px — exact, no rounding
+const CELL_H    = SHEET_H / GRID_ROWS;  // 84.4px
+const DISP_PX   = 65;   // picker cell size (px)
+const MAGNET_PX = Math.round(DISP_PX / 3);  // fridge magnet size (~22px)
+
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+// ── Color palette — named to match asset filenames ───────────────────────
+const PALETTE = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink'];
+
+// Each letter starts at a random palette index and cycles on each spawn
+const SESSION_COLOR_IDX = LETTERS.split('').map(() => Math.floor(Math.random() * PALETTE.length));
+const spawnCounts = new Array(LETTERS.length).fill(0);
+const letterColor = (i) => PALETTE[(SESSION_COLOR_IDX[i] + spawnCounts[i]) % PALETTE.length];
+
+// ── Sprite images (preloaded in init) ───────────────────────────────────
+const spriteImgs = {};  // colorName → HTMLImageElement
+
+function loadSprites() {
+  return Promise.all(PALETTE.map(color => new Promise((res, rej) => {
+    const img = new Image();
+    img.onload  = () => { spriteImgs[color] = img; res(); };
+    img.onerror = rej;
+    img.src = `assets/${color}_charcters-removebg-preview.png`;
+  })));
+}
+
+// Per-letter source rect tweaks: dx = shift left edge, dw = expand/shrink width
+const LETTER_ADJUST = {
+  'W': { dx:  0, dw: 10 },
+  'X': { dx: 10, dw: -10 },
+  'N': { dx: 10, dw: -10 },
+};
+
+// Draw a single letter from the sprite sheet onto a canvas at DISP_PX × DISP_PX.
+// Uses floating-point source rect → no rounding/clipping artifacts.
+function drawLetter(canvas, letter, color, size = DISP_PX) {
+  const li  = LETTERS.indexOf(letter);
+  const col = li % GRID_COLS;
+  const row = Math.floor(li / GRID_COLS);
+  const adj = LETTER_ADJUST[letter] || { dx: 0, dw: 0 };
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, size, size);
+  const img = spriteImgs[color];
+  if (img) {
+    ctx.drawImage(img,
+      col * CELL_W + adj.dx, row * CELL_H, CELL_W + adj.dw, CELL_H,
+      0, 0, size, size
+    );
+  }
+}
+
+// ── PocketBase ───────────────────────────────────────────────────────────
+const pb = new PocketBase(PB_URL);
+
+// ── State ────────────────────────────────────────────────────────────────
+const magnetMap = {};  // recordId → { el, record }
+let   maxZ      = 100;
+let   drag      = null; // active drag descriptor
+
+// ── DOM refs ─────────────────────────────────────────────────────────────
+const fridgeBgEl  = document.getElementById('fridge-bg');
+const layer       = document.getElementById('magnets-layer');
+const trashEl     = document.getElementById('trash-magnet');
+const abcEl       = document.getElementById('abc-magnet');
+const pickerEl    = document.getElementById('picker');
+const pickerPanel = document.getElementById('picker-panel');
+const loadingEl   = document.getElementById('loading');
+const loadDetail  = document.getElementById('loading-detail');
+
+// ── Fridge layout — positions relative to rendered fridge image rect ──────
+// Fractions calibrated to fridge AR 1023/1537 at 16:9 viewport.
+// All icon/bound positions stay locked to the fridge surface at any zoom.
+const FRAC_ABC_X   = 0.313;
+const FRAC_TRASH_X = 0.634;
+const FRAC_ICONS_Y = 0.19;
+const FRAC_MIN_X   = 0.306;
+const FRAC_MAX_X   = 0.660;
+const FRAC_MIN_Y   = 0.18;
+const FRAC_MAX_Y   = 0.82;
+
+// Handle hitbox fractions — measured at 500% zoom, back-calculated to fridge fractions
+// Adjust these if the handle drifts at your base zoom level
+const HANDLE_SQ_X  = 0.317;  // square left edge
+const HANDLE_SQ_Y  = 0.479;  // square top edge
+const HANDLE_SQ_W  = 0.069;  // square width
+const HANDLE_SQ_H  = 0.017;  // square height
+const HANDLE_TR_LX = 0.386;  // trapezoid left x
+const HANDLE_TR_RX = 0.470;  // trapezoid right x
+const HANDLE_TR_TY = 0.483;  // trapezoid top y
+const HANDLE_TR_BY = 0.492;  // trapezoid bottom y
+
+let fridgeRect = null;
+
+function updateLayout() {
+  fridgeRect = fridgeBgEl.getBoundingClientRect();
+  const { left, top, width, height } = fridgeRect;
+  abcEl.style.left   = (left + FRAC_ABC_X   * width)  + 'px';
+  abcEl.style.top    = (top  + FRAC_ICONS_Y * height) + 'px';
+  trashEl.style.left = (left + FRAC_TRASH_X * width)  + 'px';
+  trashEl.style.top  = (top  + FRAC_ICONS_Y * height) + 'px';
+  const img = document.getElementById('handle-fridge-layer');
+  img.setAttribute('x', left);
+  img.setAttribute('y', top);
+  img.setAttribute('width', width);
+  img.setAttribute('height', height);
+
+  // Handle shapes — computed from fridge fractions
+  const sqX  = left + HANDLE_SQ_X  * width;
+  const sqY  = top  + HANDLE_SQ_Y  * height;
+  const sqW  = HANDLE_SQ_W * width;
+  const sqH  = HANDLE_SQ_H * height;
+  const trLX = left + HANDLE_TR_LX * width;
+  const trRX = left + HANDLE_TR_RX * width;
+  const trTY = top  + HANDLE_TR_TY * height;
+  const trBY = top  + HANDLE_TR_BY * height;
+  const trapPts = `${trLX},${trTY} ${trLX},${trBY} ${trRX},${trBY} ${trRX},${trTY}`;
+
+  ['hc-sq', 'hh-sq'].forEach(id => {
+    const el = document.getElementById(id);
+    el.setAttribute('x', sqX);
+    el.setAttribute('y', sqY);
+    el.setAttribute('width', sqW);
+    el.setAttribute('height', sqH);
+  });
+  ['hc-trap', 'hh-trap'].forEach(id => {
+    document.getElementById(id).setAttribute('points', trapPts);
+  });
+
+  // Pivot at center of square
+  document.getElementById('handle-anim-group').style.transformOrigin =
+    `${sqX + sqW / 2}px ${sqY + sqH / 2}px`;
+}
+
+fridgeBgEl.addEventListener('load', updateLayout);
+if (fridgeBgEl.complete) updateLayout();
+window.addEventListener('resize', updateLayout);
+
+// ── Handle wiggle ────────────────────────────────────────────────────────
+document.getElementById('handle-hitbox').addEventListener('click', () => {
+  const g = document.getElementById('handle-anim-group');
+  g.classList.remove('wiggling');
+  void g.getBoundingClientRect(); // force reflow to restart animation
+  g.classList.add('wiggling');
+  g.addEventListener('animationend', () => g.classList.remove('wiggling'), { once: true });
+});
+
+// ── Build letter picker ──────────────────────────────────────────────────
+function buildPicker() {
+  pickerPanel.innerHTML = '';
+  LETTERS.split('').forEach((letter, i) => {
+    const canvas = document.createElement('canvas');
+    canvas.width  = DISP_PX;
+    canvas.height = DISP_PX;
+    canvas.className = 'picker-cell';
+    canvas.title = letter;
+    const color = letterColor(i);
+    drawLetter(canvas, letter, color);
+    canvas.addEventListener('click', () => spawnLetter(letter, i, letterColor(i)));
+    pickerPanel.appendChild(canvas);
+  });
+  // Pad to full row
+  const remainder = LETTERS.length % GRID_COLS;
+  if (remainder !== 0) {
+    for (let i = 0; i < GRID_COLS - remainder; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'picker-cell empty';
+      pickerPanel.appendChild(empty);
+    }
+  }
+}
+
+// ── Picker open / close ──────────────────────────────────────────────────
+abcEl.addEventListener('click', () => pickerEl.classList.toggle('hidden'));
+pickerEl.addEventListener('click', (e) => {
+  if (e.target === pickerEl) pickerEl.classList.add('hidden');
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') pickerEl.classList.add('hidden');
+});
+
+// ── Spawn letter → PocketBase ────────────────────────────────────────────
+async function spawnLetter(letter, letterIdx, color) {
+  pickerEl.classList.add('hidden');
+  maxZ++;
+  const fr      = fridgeRect || { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+  const halfMag = 0.02 * window.innerHeight;
+  const bMinX = fr.left + FRAC_MIN_X * fr.width  - halfMag;
+  const bMaxX = fr.left + FRAC_MAX_X * fr.width  + halfMag;
+  const bMinY = fr.top  + FRAC_MIN_Y * fr.height;
+  const bMaxY = fr.top  + FRAC_MAX_Y * fr.height + halfMag;
+  const x = (bMinX + Math.random() * (bMaxX - bMinX)) / window.innerWidth  * 100;
+  const y = (bMinY + Math.random() * (bMaxY - bMinY)) / window.innerHeight * 100;
+  try {
+    await pb.collection(COLLECTION).create({ letter, color, x, y, z_order: maxZ });
+  } catch (err) {
+    console.error('Spawn failed', err);
+  }
+  // Advance this letter's color and update its picker cell
+  spawnCounts[letterIdx]++;
+  const cells = pickerPanel.querySelectorAll('canvas.picker-cell');
+  if (cells[letterIdx]) drawLetter(cells[letterIdx], letter, letterColor(letterIdx));
+}
+
+// ── Create a letter magnet DOM element ───────────────────────────────────
+function createMagnetEl(record) {
+  const canvas = document.createElement('canvas');
+  canvas.width     = MAGNET_PX;
+  canvas.height    = MAGNET_PX;
+  canvas.className = 'letter-magnet';
+  canvas.dataset.id = record.id;
+  drawLetter(canvas, record.letter, record.color, MAGNET_PX);
+  positionEl(canvas, record);
+  attachDrag(canvas, record.id);
+  layer.appendChild(canvas);
+  return canvas;
+}
+
+function positionEl(el, record) {
+  el.style.left      = record.x + 'vw';
+  el.style.top       = record.y + 'vh';
+  el.style.zIndex    = record.z_order;
+  el.style.transform = `rotate(${record.rotation ?? 0}deg)`;
+  el.dataset.rotation = record.rotation ?? 0;
+  if (record.z_order > maxZ) maxZ = record.z_order;
+}
+
+// ── Drag ─────────────────────────────────────────────────────────────────
+function clientXY(e) {
+  return e.touches
+    ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    : { x: e.clientX,            y: e.clientY            };
+}
+
+function attachDrag(el, id) {
+  const start = (e) => {
+    e.preventDefault();
+    pickerEl.classList.add('hidden');
+    const { x, y } = clientXY(e);
+
+    if (e.shiftKey) {
+      // Rotate mode: horizontal mouse movement spins the magnet
+      const startRotation = parseFloat(el.dataset.rotation || '0');
+      el.classList.add('dragging');
+      drag = { el, id, mode: 'rotate', startX: x, startRotation, currentRotation: startRotation };
+    } else {
+      // Drag mode
+      const rect = el.getBoundingClientRect();
+      maxZ++;
+      el.style.zIndex = maxZ;
+      el.classList.add('dragging');
+      drag = { el, id, mode: 'drag', offX: x - rect.left, offY: y - rect.top };
+    }
+  };
+  el.addEventListener('mousedown',  start, { passive: false });
+  el.addEventListener('touchstart', start, { passive: false });
+}
+
+
+document.addEventListener('mousemove',  onMove, { passive: false });
+document.addEventListener('touchmove',  onMove, { passive: false });
+document.addEventListener('mouseup',    onUp);
+document.addEventListener('touchend',   onUp);
+
+function onMove(e) {
+  if (!drag) return;
+  e.preventDefault();
+  const { x, y } = clientXY(e);
+
+  if (drag.mode === 'rotate') {
+    const delta = x - drag.startX;
+    drag.currentRotation = ((drag.startRotation + delta) % 360 + 360) % 360;
+    drag.el.style.transform = `rotate(${drag.currentRotation}deg)`;
+    return;
+  }
+
+  const fr     = fridgeRect || { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+  const halfMag = 0.02 * window.innerHeight; // half of 4vh magnet size
+  const minX = fr.left + FRAC_MIN_X * fr.width  - halfMag;
+  const maxX = fr.left + FRAC_MAX_X * fr.width  + halfMag;
+  const minY = fr.top  + FRAC_MIN_Y * fr.height;
+  const maxY = fr.top  + FRAC_MAX_Y * fr.height + halfMag;
+  const left = Math.max(minX, Math.min(x - drag.offX, maxX));
+  const top  = Math.max(minY, Math.min(y - drag.offY, maxY));
+  drag.el.style.left = (left / window.innerWidth  * 100) + 'vw';
+  drag.el.style.top  = (top  / window.innerHeight * 100) + 'vh';
+
+  const tr = trashEl.getBoundingClientRect();
+  trashEl.classList.toggle('drag-over',
+    x >= tr.left && x <= tr.right && y >= tr.top && y <= tr.bottom);
+}
+
+async function onUp(e) {
+  if (!drag) return;
+  const { el, id, mode } = drag;
+  el.classList.remove('dragging');
+
+  if (mode === 'rotate') {
+    const rotation = Math.round(((drag.currentRotation ?? drag.startRotation) % 360 + 360) % 360);
+    el.dataset.rotation = rotation;
+    drag = null;
+    try { await pb.collection(COLLECTION).update(id, { rotation }); } catch (err) { console.error('Rotation save failed', err); }
+    return;
+  }
+
+  const pt = e.changedTouches
+    ? { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY }
+    : { x: e.clientX, y: e.clientY };
+
+  const tr       = trashEl.getBoundingClientRect();
+  const overTrash = pt.x >= tr.left && pt.x <= tr.right &&
+                    pt.y >= tr.top  && pt.y <= tr.bottom;
+  trashEl.classList.remove('drag-over');
+
+  drag = null;
+
+  if (overTrash) {
+    el.remove();
+    delete magnetMap[id];
+    try { await pb.collection(COLLECTION).delete(id); } catch {}
+    return;
+  }
+
+  const x = parseFloat(el.style.left);
+  const y = parseFloat(el.style.top);
+  try {
+    await pb.collection(COLLECTION).update(id, { x, y, z_order: maxZ });
+  } catch (err) {
+    console.error('Position save failed', err);
+  }
+}
+
+// ── Realtime ─────────────────────────────────────────────────────────────
+function subscribeRealtime() {
+  pb.collection(COLLECTION).subscribe('*', ({ action, record }) => {
+    if (action === 'create') {
+      if (!magnetMap[record.id]) {
+        const el = createMagnetEl(record);
+        magnetMap[record.id] = { el, record };
+      }
+    } else if (action === 'update') {
+      const entry = magnetMap[record.id];
+      if (entry && (!drag || drag.id !== record.id)) {
+        positionEl(entry.el, record);
+        entry.record = record;
+      }
+    } else if (action === 'delete') {
+      const entry = magnetMap[record.id];
+      if (entry) { entry.el.remove(); delete magnetMap[record.id]; }
+    }
+  });
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────
+async function init() {
+  loadDetail.textContent = 'Loading sprites…';
+  await loadSprites();
+  buildPicker();
+  updateLayout();
+  loadDetail.textContent = PB_URL;
+  try {
+    const records = await pb.collection(COLLECTION).getFullList({ sort: 'z_order' });
+    records.forEach((r) => { magnetMap[r.id] = { el: createMagnetEl(r), record: r }; });
+    subscribeRealtime();
+    loadingEl.classList.add('hidden');
+  } catch {
+    loadingEl.querySelector('span').textContent = 'Could not reach PocketBase.';
+    loadDetail.textContent = 'Make sure it is running at ' + PB_URL;
+  }
+}
+
+init();
+
+// ── Emit postMessage on exit ──────────────────────────────────────────────
+window.addEventListener('beforeunload', () => {
+  pb.collection(COLLECTION).unsubscribe('*');
+  window.parent?.postMessage({ type: 'MINIGAME_END', result: { won: false, score: 0 } }, '*');
+});
+</script>
+</body>
+</html>

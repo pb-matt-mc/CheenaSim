@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fridge Board — Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #222; display: flex; flex-direction: column; align-items: center; gap: 32px; padding: 32px; font-family: sans-serif; color: #fff; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #aaa; }
+
+  /* ── Fridge viewport ── */
+  .fridge-preview {
+    position: relative;
+    width: 480px;
+    height: 640px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .fridge-preview img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+
+  /* ── Magnet base style ── */
+  .magnet {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    box-shadow:
+      0 3px 8px rgba(0,0,0,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.45),
+      inset 0 -2px 0 rgba(0,0,0,0.2);
+    cursor: grab;
+    user-select: none;
+  }
+
+  /* ── Letter magnets ── */
+  .letter-magnet {
+    width: 44px;
+    height: 50px;
+    border-radius: 8px;
+    font-size: 26px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 2px 3px rgba(0,0,0,0.4);
+    font-family: 'Georgia', serif;
+  }
+  .letter-magnet::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: linear-gradient(160deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 60%);
+    pointer-events: none;
+  }
+
+  /* ── Color palette per letter ── */
+  .col-red    { background: linear-gradient(145deg, #e53e3e, #c53030); }
+  .col-orange { background: linear-gradient(145deg, #ed8936, #c05621); }
+  .col-yellow { background: linear-gradient(145deg, #ecc94b, #b7791f); }
+  .col-green  { background: linear-gradient(145deg, #48bb78, #276749); }
+  .col-blue   { background: linear-gradient(145deg, #4299e1, #2b6cb0); }
+  .col-purple { background: linear-gradient(145deg, #9f7aea, #6b46c1); }
+  .col-pink   { background: linear-gradient(145deg, #f687b3, #b83280); }
+
+  /* ── ABC magnet ── */
+  .abc-magnet {
+    width: 64px;
+    height: 38px;
+    background: linear-gradient(145deg, #f0f0f0, #c8c8c8);
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 900;
+    color: #333;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+  }
+
+  /* ── Trash magnet ── */
+  .trash-magnet {
+    width: 48px;
+    height: 52px;
+    background: linear-gradient(145deg, #f0f0f0, #d0d0d0);
+    border-radius: 10px;
+    padding: 8px;
+  }
+  .trash-magnet img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+  }
+
+  /* ── Positions for demo ── */
+  .pos-trash { bottom: 24px; left: 24px; }
+  .pos-abc   { bottom: 24px; right: 24px; }
+  .pos-h     { top: 120px; left: 60px; }
+  .pos-e     { top: 120px; left: 112px; }
+  .pos-l     { top: 120px; left: 164px; }
+  .pos-l2    { top: 120px; left: 216px; }
+  .pos-o     { top: 120px; left: 268px; }
+
+  .pos-m     { top: 190px; left: 60px; }
+  .pos-a     { top: 190px; left: 112px; }
+  .pos-t     { top: 190px; left: 164px; }
+  .pos-t2    { top: 190px; left: 216px; }
+
+  /* ── Picker overlay mockup ── */
+  .picker-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+  .picker-overlay {
+    background: rgba(20, 20, 20, 0.75);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(7, 44px);
+    gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .picker-letter {
+    width: 44px;
+    height: 50px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    font-family: 'Georgia', serif;
+    cursor: pointer;
+    text-shadow: 0 2px 3px rgba(0,0,0,0.4);
+    box-shadow:
+      0 3px 8px rgba(0,0,0,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.45),
+      inset 0 -2px 0 rgba(0,0,0,0.2);
+    position: relative;
+  }
+  .picker-letter::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: linear-gradient(160deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 60%);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<h2>Fridge + Magnets — Viewport mockup</h2>
+<div class="fridge-preview">
+  <img src="assets/fridge.jpg" alt="fridge">
+
+  <!-- HELLO spelled out -->
+  <div class="magnet letter-magnet col-blue pos-h">H</div>
+  <div class="magnet letter-magnet col-red pos-e">E</div>
+  <div class="magnet letter-magnet col-green pos-l">L</div>
+  <div class="magnet letter-magnet col-purple pos-l2">L</div>
+  <div class="magnet letter-magnet col-orange pos-o">O</div>
+
+  <!-- MATT spelled out -->
+  <div class="magnet letter-magnet col-pink pos-m">M</div>
+  <div class="magnet letter-magnet col-red pos-a">A</div>
+  <div class="magnet letter-magnet col-yellow pos-t">T</div>
+  <div class="magnet letter-magnet col-orange pos-t2">T</div>
+
+  <!-- Permanent magnets -->
+  <div class="magnet trash-magnet pos-trash">
+    <img src="assets/trash.svg" alt="trash">
+  </div>
+  <div class="magnet abc-magnet pos-abc">ABC</div>
+</div>
+
+<h2>Letter picker overlay (appears on ABC click)</h2>
+<div class="picker-section">
+  <div class="picker-overlay" id="picker"></div>
+</div>
+
+<script>
+  const PALETTE = ['#e53e3e','#ed8936','#ecc94b','#48bb78','#4299e1','#9f7aea','#f687b3'];
+  const PALETTE_DARK = ['#c53030','#c05621','#b7791f','#276749','#2b6cb0','#6b46c1','#b83280'];
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const picker = document.getElementById('picker');
+
+  letters.forEach((l, i) => {
+    const ci = i % PALETTE.length;
+    const el = document.createElement('div');
+    el.className = 'picker-letter';
+    el.textContent = l;
+    el.style.background = `linear-gradient(145deg, ${PALETTE[ci]}, ${PALETTE_DARK[ci]})`;
+    picker.appendChild(el);
+  });
+</script>
+</body>
+</html>

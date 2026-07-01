@@ -19,4 +19,13 @@ export const ROOM_POIS: Partial<Record<HouseRoom, PoiDef[]>> = {
       cardColor: 0xF5B547,
     },
   ],
+  kitchen: [
+    {
+      x: 720, y: 320,
+      activityId: 'fridge_board',
+      cardTitle: 'Fridge Board',
+      cardIcon: '🧲',
+      cardColor: 0x48BB78,
+    },
+  ],
 };

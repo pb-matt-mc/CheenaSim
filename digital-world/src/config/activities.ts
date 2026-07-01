@@ -22,4 +22,14 @@ export const ACTIVITIES: Record<string, ActivityDef> = {
       { anim: 'reading_magazine', duration: 0, loop: true },
     ],
   },
+  fridge_board: {
+    id:           'fridge_board',
+    label:        'Fridge Board',
+    icon:         '🧲',
+    rooms:        ['kitchen'],
+    selfSceneKey: 'FridgeBoardScene',
+    partnerAnim:  [
+      { anim: 'idle', duration: 0, loop: true },
+    ],
+  },
 };
