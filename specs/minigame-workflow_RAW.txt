@@ -1,0 +1,30 @@
+#Goal#
+ To have minigmaes for this cheena sim world that can be quickly integrated and are engaging.
+
+#Problem#
+ Making a game is hard, time consuming and project scope can creep.
+
+#Solution#
+ A dedicated template/workflow for an idea to become a game.
+  - this template will be filled in and followed by claude, but the bones of the mini-game development template will be determined once then forever replicated and possibly iterated.
+
+#Idea#
+ [User Prompt]
+  The prompt will offer claude a foundation for what the game should be like; IF the game is a fully unique concept claude must ensure to extract all neccessary information from the user, IF the game is a remix of an existing format claude is expected to understand the neccessary deliverables or search them.
+
+ [Key Deliverables]
+  Claude must ensure to extract all key deliverables for the template before begining the implimentation.
+   - Development complexity: A high complexity game my require player data to be exchanged, advanced movement mechanics or navigating many screens. A low complexity game may be a background with a few buttons and should not require and instruction/control pop ups.
+   - Game complexity: are there various goals for the user to keep track of? is there multiple ways to solve a puzzle? is the goal obvious to the player?
+   - Game conditions: Is there winning/losing/points? Is there a timelimit or confine to the player? Are there multiple difficulties or multiple levels?
+   - Game Identity: What is this game trying to convey to the user; Is there a crucial punchline or deliverable the game should impact unto the user.
+   -Game Rules: How does one play the game, what must the player do in order to interact with the game? (think the key verb to describe the game) ['collect', 'kill', 'steer','hide', 'defend', etc.]
+   -Game controls: what does the real life user do with there body to make the player do things (WASD, click, move mouse)
+   -Game synopsis: what does it sound like to play the game?
+   -Game assets: what sprites, textures, images, sounds are required for the game?
+
+ Claude should then fill in the template with this information, some of which should be directly given by the user, some claude should inuit, such as some game assets, perhaps the devemopment or game complexity. Claude should present the plan to the user and make mock ups for certain key aspects to ensure proper adherence to the users vision.
+
+Claude should use openAI image generation for mock ups and some larger assets like backgrounds. If claude can find available assets or images on the internet it should do so. it should also yous pixel labs ai generation tools for charecters, detailed assets or anything else.
+
+Claude should use the generated assets and code the mini game, test it and then generate a title banner to put in the digital world as a marker of where to join the game.
